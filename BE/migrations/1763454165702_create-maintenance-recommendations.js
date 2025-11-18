@@ -16,7 +16,7 @@ export const up = (pgm) => {
     anomaly_id: {
       type: 'INTEGER',
       notNull: true,
-      references: 'anomaly_losg(id)',
+      references: 'anomaly_logs(id)',
       onDelete: 'CASCADE',
     },
     predicted_tick: {
