@@ -2,7 +2,7 @@ export const shorthands = undefined;
 
 export const up = (pgm) => {
   pgm.createTable('chat_sessions', {
-    sessions_id: {
+    id: {
       type: 'SERIAL',
       primaryKey: true,
     },

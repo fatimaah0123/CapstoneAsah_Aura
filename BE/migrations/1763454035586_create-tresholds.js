@@ -2,7 +2,7 @@ export const shorthands = undefined;
 
 export const up = (pgm) => {
   pgm.createTable('thresholds', {
-    threshold_id: {
+    id: {
       type: 'SERIAL',
       primaryKey: true,
     },

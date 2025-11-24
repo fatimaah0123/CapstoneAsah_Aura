@@ -15,7 +15,7 @@ export const up = (pgm) => {
     recommendation_id: {
       type: 'INTEGER',
       notNull: true,
-      references: 'recommendations(id)',
+      references: 'maintenance_recommendations(id)',
       onDelete: 'CASCADE',
     },
     status: {
