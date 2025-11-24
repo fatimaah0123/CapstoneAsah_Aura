@@ -2,7 +2,7 @@ export const shorthands = undefined;
 
 export const up = (pgm) => {
   pgm.createTable('maintenance_tickets', {
-    ticket_id: {
+    id: {
       type: 'SERIAL',
       primaryKey: true,
     },
