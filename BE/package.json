@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node ./src/app.js",
     "dev": "nodemon ./src/app.js",
-    "migrate": "node-pg-migrate"
+    "migrate": "node-pg-migrate",
+    "seed": "node ./seeds/machine/machineSeed.js"
   },
   "keywords": [],
   "author": "",

@@ -5,48 +5,48 @@ export const up = (pgm) => {
     id: {
       type: 'serial',
       primaryKey: true,
-      notNull: true,
     },
     date_time: {
-      type: 'TIMESTAMP',
+      type: 'timestamp',
       notNull: true,
-    },
-    equipment_id: {
-      type: 'INTEGER',
-      notNull: true,
-      references: 'equipments(id)',
-      onDelete: 'CASCADE',
     },
     rotational_speed: {
-      type: 'FLOAT',
+      type: 'float',
       notNull: true,
     },
     process_temperature: {
-      type: 'FLOAT',
+      type: 'float',
       notNull: true,
     },
     air_temperature: {
-      type: 'FLOAT',
+      type: 'float',
       notNull: true,
     },
     torque: {
-      type: 'FLOAT',
+      type: 'float',
       notNull: true,
     },
     tool_wear: {
-      type: 'FLOAT',
+      type: 'float',
       notNull: true,
     },
     target: {
-      type: 'BOOLEAN',
+      type: 'integer',
       notNull: true,
     },
     failure_type: {
-      type: 'VARCHAR(50)',
+      type: 'varchar(255)',
       notNull: false,
+    },
+    machine_id: {
+      type: 'integer',
+      notNull: true,
+      references: '"machines"',
+      onDelete: 'cascade',
     },
   });
 };
+
 export const down = (pgm) => {
   pgm.dropTable('sensor_data');
 };

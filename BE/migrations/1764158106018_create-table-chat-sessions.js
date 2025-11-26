@@ -3,23 +3,24 @@ export const shorthands = undefined;
 export const up = (pgm) => {
   pgm.createTable('chat_sessions', {
     id: {
-      type: 'SERIAL',
+      type: 'serial',
       primaryKey: true,
     },
     user_query: {
-      type: 'TEXT',
+      type: 'text',
+      notNull: true,
     },
     agent_response: {
-      type: 'TEXT',
-    },
-    timestamp: {
-      type: 'TIMESTAMP',
+      type: 'text',
       notNull: true,
-      default: pgm.func('current_timestamp'),
+    },
+    created_at: {
+      type: 'timestamp',
+      notNull: true,
+      default: pgm.func('CURRENT_TIMESTAMP'),
     },
   });
 };
-
 export const down = (pgm) => {
   pgm.dropTable('chat_sessions');
 };

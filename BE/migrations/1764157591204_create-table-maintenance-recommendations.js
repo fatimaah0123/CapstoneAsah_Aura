@@ -3,32 +3,33 @@ export const shorthands = undefined;
 export const up = (pgm) => {
   pgm.createTable('maintenance_recommendations', {
     id: {
-      type: 'SERIAL',
+      type: 'serial',
       primaryKey: true,
+    },
+    rul_hours: {
+      type: 'float',
       notNull: true,
     },
-    equipment_id: {
-      type: 'INTEGER',
+    rul_days: {
+      type: 'float',
       notNull: true,
-      references: 'equipments(id)',
+    },
+    threshold_id: {
+      type: 'integer',
+      notNull: true,
+      references: 'thresholds',
       onDelete: 'CASCADE',
     },
-    anomaly_id: {
-      type: 'INTEGER',
+    machine_id: {
+      type: 'integer',
       notNull: true,
-      references: 'anomaly_logs(id)',
+      references: 'machines',
       onDelete: 'CASCADE',
     },
-    predicted_tick: {
-      type: 'VARCHAR(255)',
-    },
-    action: {
-      type: 'TEXT',
-    },
-    generated_at: {
-      type: 'TIMESTAMP',
+    created_at: {
+      type: 'timestamp',
       notNull: true,
-      default: pgm.func('current_timestamp'),
+      default: pgm.func('CURRENT_TIMESTAMP'),
     },
   });
 };
