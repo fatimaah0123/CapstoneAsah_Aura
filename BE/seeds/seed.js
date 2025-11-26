@@ -1,9 +1,9 @@
 // src/seeds/machineSeed.js
-import MachineService from './machineService.js';
+import seedService from './seedService.js';
 
 (async () => {
   try {
-    await MachineService.seedMachines();
+    await seedService.seed();
   } catch (error) {
     console.error('Failed to seed machines:', error);
   }

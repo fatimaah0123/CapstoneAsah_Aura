@@ -6,7 +6,7 @@
     "start": "node ./src/app.js",
     "dev": "nodemon ./src/app.js",
     "migrate": "node-pg-migrate",
-    "seed": "node ./seeds/machine/machineSeed.js"
+    "seed": "node ./seeds/seed.js"
   },
   "keywords": [],
   "author": "",

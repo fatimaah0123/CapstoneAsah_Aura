@@ -10,7 +10,7 @@ export const up = (pgm) => {
       type: 'varchar(255)',
       notNull: true,
     },
-    priorty: {
+    priority: {
       type: 'varchar(255)',
       notNull: true,
     },

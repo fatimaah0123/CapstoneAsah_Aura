@@ -2,13 +2,13 @@
 import { Pool } from 'pg';
 import 'dotenv/config';
 
-class MachineService {
+class SeedService {
   constructor() {
     this._pool = new Pool();
   }
 
-  async seedMachines() {
-    const query = `
+  async seed() {
+    const query1 = `
         INSERT INTO machines (name, type, location)
         SELECT 
             name_base || ' ' || num AS name,
@@ -34,8 +34,18 @@ class MachineService {
         ) AS sub;
     `;
 
+    const query2 = `
+    INSERT INTO thresholds (status, priority, action)
+    VALUES
+      ('CRITICAL', 'URGENT', 'Schedule maintenance IMMEDIATELY (within 1-2 days)'),
+      ('CRITICAL', 'HIGH', 'Schedule maintenance within 1-2 weeks'),
+      ('WARNING', 'MEDIUM', 'Schedule maintenance within 4-8 weeks'),
+      ('NORMAL', 'LOW', 'Continue routine monitoring');
+    `;
+
     try {
-      await this._pool.query(query);
+      await this._pool.query(query1);
+      await this._pool.query(query2);
       console.log('Seeding completed: 400 machines added.');
     } catch (error) {
       console.error('Seeding error:', error);
@@ -47,4 +57,4 @@ class MachineService {
   }
 }
 
-export default new MachineService();
+export default new SeedService();
