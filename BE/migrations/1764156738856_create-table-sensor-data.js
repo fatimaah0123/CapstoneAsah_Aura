@@ -1,6 +1,7 @@
 export const shorthands = undefined;
 
 export const up = (pgm) => {
+  pgm.createType('machine_type_enum', ['L', 'M', 'H']);
   pgm.createTable('sensor_data', {
     id: {
       type: 'serial',
@@ -8,6 +9,10 @@ export const up = (pgm) => {
     },
     date_time: {
       type: 'timestamp',
+      notNull: true,
+    },
+    type: {
+      type: 'machine_type_enum',
       notNull: true,
     },
     rotational_speed: {
@@ -30,13 +35,21 @@ export const up = (pgm) => {
       type: 'float',
       notNull: true,
     },
-    target: {
-      type: 'integer',
+    machine_age_hours: {
+      type: 'float',
       notNull: true,
     },
-    failure_type: {
-      type: 'varchar(255)',
-      notNull: false,
+    hours_since_last: {
+      type: 'float',
+      notNull: true,
+    },
+    temp_rate_of_change: {
+      type: 'float',
+      notNull: true,
+    },
+    rpm_variance: {
+      type: 'float',
+      notNull: true,
     },
     machine_id: {
       type: 'integer',
@@ -49,4 +62,5 @@ export const up = (pgm) => {
 
 export const down = (pgm) => {
   pgm.dropTable('sensor_data');
+  pgm.dropType('machine_type_enum');
 };

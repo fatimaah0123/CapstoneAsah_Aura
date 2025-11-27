@@ -14,11 +14,17 @@ export const up = (pgm) => {
       type: 'float',
       notNull: true,
     },
-    threshold_id: {
-      type: 'integer',
+    status: {
+      type: 'varchar(255)',
       notNull: true,
-      references: 'thresholds',
-      onDelete: 'CASCADE',
+    },
+    priority: {
+      type: 'varchar(255)',
+      notNull: true,
+    },
+    action: {
+      type: 'varchar(255)',
+      notNull: true,
     },
     machine_id: {
       type: 'integer',

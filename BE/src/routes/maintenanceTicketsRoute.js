@@ -1,5 +1,5 @@
 import express from 'express';
-import MaintenanceTicketsController from '../controllers/maintenanceTicketsController.js';
+import MaintenanceTicketsController from '../controllers/MaintenanceTicketsController.js';
 
 const Router = express.Router();
 

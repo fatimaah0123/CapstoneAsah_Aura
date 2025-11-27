@@ -3,6 +3,6 @@ const Router = express.Router();
 
 import PredictController from '../controllers/PredictController.js';
 
-Router.post('/predict', PredictController.postPredict);
+Router.post('/', PredictController.postPredict);
 
 export default Router;

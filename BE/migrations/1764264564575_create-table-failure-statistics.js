@@ -26,10 +26,10 @@ export const up = (pgm) => {
       type: 'float',
       notNull: true,
     },
-    machine_id: {
+    maintenace_recommendations_id: {
       type: 'integer',
       notNull: true,
-      references: 'machines',
+      references: 'maintenance_recommendations',
       onDelete: 'CASCADE',
     },
     create_at: {
