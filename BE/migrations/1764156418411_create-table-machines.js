@@ -1,7 +1,7 @@
 export const shorthands = undefined;
 
 export const up = (pgm) => {
-  pgm.createType('machine_type', ['L', 'M', 'H']);
+  pgm.createType('machine_type_enum', ['L', 'M', 'H']);
   pgm.createTable('machines', {
     id: {
       type: 'serial',
@@ -12,7 +12,7 @@ export const up = (pgm) => {
       notNull: true,
     },
     type: {
-      type: 'machine_type',
+      type: 'machine_type_enum',
       notNull: true,
     },
     location: {
@@ -24,4 +24,5 @@ export const up = (pgm) => {
 
 export const down = (pgm) => {
   pgm.dropTable('machines');
+  pgm.dropType('machine_type_enum');
 };

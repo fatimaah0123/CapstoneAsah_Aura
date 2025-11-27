@@ -14,7 +14,7 @@ class SeedService {
             name_base || ' ' || num AS name,
             (CASE WHEN num % 3 = 1 THEN 'L'
                   WHEN num % 3 = 2 THEN 'M'
-                  ELSE 'H' END)::machine_type AS type,
+                  ELSE 'H' END)::machine_type_enum AS type,
             'Location ' || ((num % 10) + 1) AS location
         FROM (
             SELECT gs AS num,
@@ -46,7 +46,7 @@ class SeedService {
     try {
       await this._pool.query(query1);
       await this._pool.query(query2);
-      console.log('Seeding completed: 400 machines added.');
+      console.log('Seeding completed.');
     } catch (error) {
       console.error('Seeding error:', error);
       throw error;

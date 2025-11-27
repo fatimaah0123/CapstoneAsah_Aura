@@ -1,6 +1,8 @@
 import { PythonShell } from 'python-shell';
+import FailureStatisticRepo from '../repositories/FailureStatisticRepo.js';
+import MaintenanceRecommendationRepo from '../repositories/MaintenanceRecommendationRepo.js';
 
-class ModelService {
+class PredictService {
   rulPredict(inputData) {
     const pyPath = './src/models/script/rul.py';
     const options = {
@@ -35,4 +37,4 @@ class ModelService {
   }
 }
 
-export default new ModelService();
+export default new PredictService();

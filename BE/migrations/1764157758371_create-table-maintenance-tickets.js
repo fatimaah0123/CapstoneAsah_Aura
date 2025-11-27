@@ -1,6 +1,13 @@
 export const shorthands = undefined;
 
 export const up = (pgm) => {
+  pgm.createType('status_enum', ['open', 'in_progress', 'closed']);
+  pgm.createType('maintenance_type_enum', [
+    'preventive',
+    'corrective',
+    'predictive',
+    'inspective',
+  ]);
   pgm.createTable('maintenance_tickets', {
     id: {
       type: 'serial',
@@ -27,8 +34,13 @@ export const up = (pgm) => {
       notNull: true,
     },
     maintenance_type: {
-      type: 'varchar(255)',
+      type: 'maintenance_type_enum',
       notNull: true,
+    },
+    status: {
+      type: 'status_enum',
+      notNull: true,
+      default: 'open',
     },
     part: {
       type: 'varchar(255)',
@@ -63,4 +75,6 @@ export const up = (pgm) => {
 
 export const down = (pgm) => {
   pgm.dropTable('maintenance_tickets');
+  pgm.dropType('status_enum');
+  pgm.dropType('maintenance_type_enum');
 };
