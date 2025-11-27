@@ -2,6 +2,8 @@ import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
 
+import AppError from './utils/AppError.js';
+
 import { errorHandler } from './middleware/errorHandler.js';
 import Routes from './routes/index.js';
 
@@ -13,6 +15,11 @@ app.use(express.json());
 app.use(cors());
 
 app.use(Routes);
+
+app.all(/(.*)/, (req, res, next) => {
+  next(new AppError(`Tidak dapat menemukan ${req.originalUrl}`, 404));
+});
+
 app.use(errorHandler);
 
 app.listen(PORT, HOST, () => {

@@ -12,11 +12,12 @@ sys.path.append(os.path.join(current_dir, '../Pipeline'))
 from preprocessing_pipeline import PreprocessingPipeline
 
 # --- Load preprocessing pipeline ---
+
 pkl_path = os.path.join(current_dir, '../Model/preprocessing_pipeline.pkl')
 preprocessor = PreprocessingPipeline.load(pkl_path)
 
 # --- Load Failure prediction model ---
-failure_model_path = os.path.join(current_dir, '../Model/failure_model.pkl')
+failure_model_path = os.path.join(current_dir, '../Model/preprocessing_pipeline.pkl')
 failure_model = joblib.load(failure_model_path)
 
 # --- Fungsi prediksi Failure ---
