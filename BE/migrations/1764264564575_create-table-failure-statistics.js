@@ -6,6 +6,14 @@ export const up = (pgm) => {
       type: 'serial',
       primaryKey: true,
     },
+    type: {
+      type: 'varchar(255)',
+      notNull: true,
+    },
+    confidence: {
+      type: 'float',
+      notNull: true,
+    },
     heat_dissipation_failure: {
       type: 'float',
       notNull: true,
@@ -26,10 +34,10 @@ export const up = (pgm) => {
       type: 'float',
       notNull: true,
     },
-    maintenace_recommendations_id: {
+    machine_id: {
       type: 'integer',
       notNull: true,
-      references: 'maintenance_recommendations',
+      references: 'machines',
       onDelete: 'CASCADE',
     },
     create_at: {
