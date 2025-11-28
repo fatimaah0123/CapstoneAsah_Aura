@@ -98,7 +98,6 @@ class predictService {
   async postFailureStatistics(payload, machine_id) {
     const data = Array.isArray(payload) ? payload : [paylaod];
     const id = Array.isArray(machine_id) ? machine_id : [machine_id];
-    console.log(data);
     const client = await this._pool.connect();
     try {
       await client.query('BEGIN;');

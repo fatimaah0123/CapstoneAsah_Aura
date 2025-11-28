@@ -24,7 +24,10 @@ class PredictController {
           power_failure: item.failure.probabilities['Power Failure'],
           tool_wear_failure: item.failure.probabilities['Tool Wear Failure'],
         }));
-      await PredictService.postFailureStatistics(failureStatistics, req.body);
+
+      if (failureStatistics.length !== 0) {
+        await PredictService.postFailureStatistics(failureStatistics, req.body);
+      }
 
       res.status(200).json({ status: 'success', data: result });
     } catch (error) {
