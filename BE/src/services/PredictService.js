@@ -16,27 +16,18 @@ class PredictService {
   async createPredicts(payload) {
     try {
       const result = await this._predict(payload);
-      const recommendations =
-        await this._formattedMaintenanceRecommendationData(result);
-      const failureStatistics = await this._formattedFailureStatisticData(
-        result
+      const recommendations = [].concat(
+        await this._formattedMaintenanceRecommendationData(result)
       );
 
-      const arrayRecommendations = Array.isArray(recommendations)
-        ? recommendations
-        : [recommendations];
-
-      const arrayFailureStatistics = Array.isArray(failureStatistics)
-        ? failureStatistics
-        : [failureStatistics];
-
-      await this._createMaintenanceRecommenndations(
-        arrayRecommendations,
-        payload
+      const failureStatistics = [].concat(
+        await this._formattedFailureStatisticData(result)
       );
+
+      await this._createMaintenanceRecommenndations(recommendations, payload);
 
       if (failureStatistics.length !== 0) {
-        await this._createFailureStatistics(arrayFailureStatistics, payload);
+        await this._createFailureStatistics(failureStatistics, payload);
       }
       return true;
     } catch (error) {
