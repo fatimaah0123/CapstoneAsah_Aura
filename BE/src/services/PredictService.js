@@ -8,22 +8,43 @@ const __dirname = path.dirname(__filename);
 
 import AppError from '../utils/AppError.js';
 
-class predictService {
+class PredictService {
   constructor() {
     this._pyPath = path.resolve(__dirname, '../models/script/main.py');
     this._pool = new Pool();
   }
-  async getModelPredicts(payload) {
+  async createPredicts(payload) {
     try {
-      const result = await this._modelPredict(payload);
-      return result;
+      const result = await this._predict(payload);
+      const recommendations =
+        await this._formattedMaintenanceRecommendationData(result);
+      const failureStatistics = await this._formattedFailureStatisticData(
+        result
+      );
+
+      const arrayRecommendations = Array.isArray(recommendations)
+        ? recommendations
+        : [recommendations];
+
+      const arrayFailureStatistics = Array.isArray(failureStatistics)
+        ? failureStatistics
+        : [failureStatistics];
+
+      await this._createMaintenanceRecommenndations(
+        arrayRecommendations,
+        payload
+      );
+
+      if (failureStatistics.length !== 0) {
+        await this._createFailureStatistics(arrayFailureStatistics, payload);
+      }
+      return true;
     } catch (error) {
-      throw new AppError(error.message, 400);
+      throw new AppError(error.message, error.statusCode);
     }
   }
 
-  async postSensorData(payload) {
-    const data = Array.isArray(payload) ? payload : [payload];
+  async createSensorData(data) {
     const client = await this._pool.connect();
     try {
       await client.query('BEGIN;');
@@ -56,15 +77,16 @@ class predictService {
       return true;
     } catch (error) {
       await client.query('ROLLBACK;');
-      throw new AppError(error.message, 400);
+      throw new AppError(
+        `Terdapat kesalahan dalam memproses data sensor : ${error.message}`,
+        400
+      );
     } finally {
       client.release();
     }
   }
 
-  async postMaintenaceRecommenndations(payload, id_machine) {
-    const data = Array.isArray(payload) ? payload : [payload];
-    const id = Array.isArray(id_machine) ? id_machine : [id_machine];
+  async _createMaintenanceRecommenndations(data, id) {
     const client = await this._pool.connect();
     try {
       await client.query('BEGIN;');
@@ -89,15 +111,16 @@ class predictService {
       console.log('Maintenance Recommendations inserted successfully');
     } catch (error) {
       await client.query('ROLLBACK;');
-      throw new AppError(error.message, 400);
+      throw new AppError(
+        `Terdapat kesalahan dalam memproses data maintenance recommendation : ${error.message}`,
+        400
+      );
     } finally {
       client.release();
     }
   }
 
-  async postFailureStatistics(payload, machine_id) {
-    const data = Array.isArray(payload) ? payload : [paylaod];
-    const id = Array.isArray(machine_id) ? machine_id : [machine_id];
+  async _createFailureStatistics(data, id) {
     const client = await this._pool.connect();
     try {
       await client.query('BEGIN;');
@@ -124,13 +147,43 @@ class predictService {
       console.log('Failure Statistics inserted successfully');
     } catch (error) {
       await client.query('ROLLBACK;');
-      throw new AppError(error.message, 400);
+      throw new AppError(
+        `Terdapat kesalahan dalam memproses data failure statistics : ${error.message}`,
+        400
+      );
     } finally {
       client.release();
     }
   }
 
-  async _modelPredict(payload) {
+  async _formattedMaintenanceRecommendationData(payload) {
+    const result = payload.map((data) => data.prediction);
+
+    return result;
+  }
+
+  async _formattedFailureStatisticData(payload) {
+    const result = payload
+      .map((data, index) => ({
+        ...data,
+        originalIndex: index,
+      }))
+      .filter((data) => data.failure.type != null)
+      .map((data) => ({
+        originalIndex: data.originalIndex,
+        type: data.failure.type,
+        confidence: data.failure.confidence,
+        heat_dissipation_failure:
+          data.failure.probabilities['Heat Dissipation Failure'],
+        random_failures: data.failure.probabilities['Random Failures'],
+        overstrain_failure: data.failure.probabilities['Overstrain Failure'],
+        power_failure: data.failure.probabilities['Power Failure'],
+        tool_wear_failure: data.failure.probabilities['Tool Wear Failure'],
+      }));
+
+    return result;
+  }
+  async _predict(payload) {
     return new Promise((resolve, reject) => {
       try {
         let pyshell = new PythonShell(this._pyPath, {
@@ -146,14 +199,21 @@ class predictService {
 
         pyshell.end((err) => {
           if (err) {
-            reject(err);
+            reject(
+              new AppError(
+                `Terdapat kesalahan pada python shell : ${err.message}`,
+                500
+              )
+            );
           }
         });
       } catch (error) {
-        reject(error);
+        reject(
+          new AppError(`Terdapat kesalahan pada model : ${error.message}`, 500)
+        );
       }
     });
   }
 }
 
-export default new predictService();
+export default new PredictService();

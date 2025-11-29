@@ -1,35 +1,19 @@
 import PredictService from '../services/PredictService.js';
+import { predictValidator } from '../validators/predict/index.js';
 class PredictController {
-  async postPredict(req, res, next) {
+  constructor() {}
+  async createPredict(req, res, next) {
     try {
-      // TODO data Validate
-      await PredictService.postSensorData(req.body);
-      const result = await PredictService.getModelPredicts(req.body);
-      const recommendations = result.map((item) => item.prediction);
-      await PredictService.postMaintenaceRecommenndations(
-        recommendations,
-        req.body
-      );
-      const failureStatistics = result
-        .map((item, index) => ({ ...item, originalIndex: index }))
-        .filter((item) => item.failure.type != null)
-        .map((item) => ({
-          originalIndex: item.originalIndex,
-          type: item.failure.type,
-          confidence: item.failure.confidence,
-          heat_dissipation_failure:
-            item.failure.probabilities['Heat Dissipation Failure'],
-          random_failures: item.failure.probabilities['Random Failures'],
-          overstrain_failure: item.failure.probabilities['Overstrain Failure'],
-          power_failure: item.failure.probabilities['Power Failure'],
-          tool_wear_failure: item.failure.probabilities['Tool Wear Failure'],
-        }));
+      const input = Array.isArray(req.body) ? req.body : [req.body];
+      predictValidator.validateCreatePredict(input);
+      await PredictService.createSensorData(input);
+      const result = await PredictService.createPredicts(input);
 
-      if (failureStatistics.length !== 0) {
-        await PredictService.postFailureStatistics(failureStatistics, req.body);
+      if (!result) {
+        return next(new AppError('Gagal membuat prediksi', 400));
       }
 
-      res.status(200).json({ status: 'success', data: result });
+      res.status(200).json({ status: 'success', message: 'Prediksi berhasil' });
     } catch (error) {
       next(error);
     }
