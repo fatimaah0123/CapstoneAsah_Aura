@@ -16,20 +16,20 @@ class PredictService {
   async createPredicts(payload) {
     try {
       const result = await this._predict(payload);
-      const recommendations = [].concat(
-        await this._formattedMaintenanceRecommendationData(result)
+
+      const recommendationFormatted = [].concat(
+        await this._formattedMaintenanceRecommendationData(result, payload)
+      );
+      const recommendations = await this._createMaintenanceRecommendations(
+        recommendationFormatted
       );
 
-      const failureStatistics = [].concat(
-        await this._formattedFailureStatisticData(result)
+      const failureStatisticFormatted = [].concat(
+        await this._formattedFailureStatisticData(result, recommendations)
       );
-
-      await this._createMaintenanceRecommenndations(recommendations, payload);
-
-      if (failureStatistics.length !== 0) {
-        await this._createFailureStatistics(failureStatistics, payload);
+      if (failureStatisticFormatted.length) {
+        await this._createFailureStatistics(failureStatisticFormatted);
       }
-      return true;
     } catch (error) {
       throw new AppError(error.message, error.statusCode);
     }
@@ -39,13 +39,14 @@ class PredictService {
     const client = await this._pool.connect();
     try {
       await client.query('BEGIN;');
+      const result = [];
       for (const item of data) {
-        await client.query(
+        const res = await client.query(
           `
-          INSERT INTO sensor_data (
+        INSERT INTO sensor_data (
             date_time, type, rotational_speed, process_temperature, air_temperature, torque,
             tool_wear, machine_age_hours, hours_since_last, temp_rate_of_change, rpm_variance, machine_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning *
         `,
           [
             item.datetime,
@@ -62,10 +63,26 @@ class PredictService {
             item.machineID,
           ]
         );
+        const inserted = res.rows[0];
+        result.push({
+          id: inserted.id,
+          datetime: inserted.date_time,
+          Type: inserted.type,
+          Rotational_speed: inserted.rotational_speed,
+          Process_temperature: inserted.process_temperature,
+          Air_temperature: inserted.air_temperature,
+          Torque: inserted.torque,
+          Tool_wear: inserted.tool_wear,
+          machine_age_hours: inserted.machine_age_hours,
+          hours_since_last: inserted.hours_since_last,
+          Temp_Rate_of_Change: inserted.temp_rate_of_change,
+          RPM_Variance: inserted.rpm_variance,
+          machineID: inserted.machine_id,
+        });
       }
       await client.query('COMMIT;');
       console.log('Sensor Data inserted successfully');
-      return true;
+      return result;
     } catch (error) {
       await client.query('ROLLBACK;');
       throw new AppError(
@@ -77,29 +94,32 @@ class PredictService {
     }
   }
 
-  async _createMaintenanceRecommenndations(data, id) {
+  async _createMaintenanceRecommendations(payload) {
     const client = await this._pool.connect();
     try {
       await client.query('BEGIN;');
-      for (let i = 0; i < data.length; i++) {
-        await client.query(
+      const result = [];
+      for (const data of payload) {
+        const res = await client.query(
           `
           INSERT INTO maintenance_recommendations (
-            rul_hours, rul_days, status, priority, action, machine_id
-          ) VALUES ($1,$2,$3,$4,$5,$6)
+            rul_hours, rul_days, status, priority, action, sensor_data_id
+          ) VALUES ($1,$2,$3,$4,$5,$6) returning *
         `,
           [
-            data[i].rul_hours,
-            data[i].rul_days,
-            data[i].status,
-            data[i].priority,
-            data[i].action,
-            id[i].machineID,
+            data.rul_hours,
+            data.rul_days,
+            data.status,
+            data.priority,
+            data.action,
+            data.sensor_data_id,
           ]
         );
+        result.push(res.rows[0]);
       }
       await client.query('COMMIT;');
       console.log('Maintenance Recommendations inserted successfully');
+      return result;
     } catch (error) {
       await client.query('ROLLBACK;');
       throw new AppError(
@@ -111,31 +131,34 @@ class PredictService {
     }
   }
 
-  async _createFailureStatistics(data, id) {
+  async _createFailureStatistics(payload) {
     const client = await this._pool.connect();
     try {
       await client.query('BEGIN;');
-      for (const item of data) {
-        await client.query(
+      const result = [];
+      for (const data of payload) {
+        const res = await client.query(
           `
           INSERT INTO failure_statistics (
-            type, confidence, heat_dissipation_failure, random_failures, overstrain_failure, power_failure, tool_wear_failure, machine_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7, $8)
+            type, confidence, heat_dissipation_failure, random_failures, overstrain_failure, power_failure, tool_wear_failure, maintenance_recommendation_id
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7, $8) returning *
         `,
           [
-            item.type,
-            item.confidence,
-            item.heat_dissipation_failure,
-            item.random_failures,
-            item.overstrain_failure,
-            item.power_failure,
-            item.tool_wear_failure,
-            id[item.originalIndex].machineID,
+            data.type,
+            data.confidence,
+            data.heat_dissipation_failure,
+            data.random_failures,
+            data.overstrain_failure,
+            data.power_failure,
+            data.tool_wear_failure,
+            data.maintenance_recommendation_id,
           ]
         );
+        result.push(res.rows[0]);
       }
       await client.query('COMMIT;');
       console.log('Failure Statistics inserted successfully');
+      return result;
     } catch (error) {
       await client.query('ROLLBACK;');
       throw new AppError(
@@ -147,32 +170,35 @@ class PredictService {
     }
   }
 
-  async _formattedMaintenanceRecommendationData(payload) {
-    const result = payload.map((data) => data.prediction);
+  async _formattedMaintenanceRecommendationData(result, payload) {
+    const formatted = result.map((data, index) => ({
+      sensor_data_id: payload[index].id,
+      ...data.prediction,
+    }));
 
-    return result;
+    return formatted;
   }
 
-  async _formattedFailureStatisticData(payload) {
-    const result = payload
+  async _formattedFailureStatisticData(result, payload) {
+    const formatted = result
       .map((data, index) => ({
-        ...data,
-        originalIndex: index,
+        ...data.failure,
+        maintenance_recommendation_id: payload[index].id,
       }))
-      .filter((data) => data.failure.type != null)
+      .filter((data) => data.type != null)
       .map((data) => ({
-        originalIndex: data.originalIndex,
-        type: data.failure.type,
-        confidence: data.failure.confidence,
+        ...data,
+        type: data.type,
+        confidence: data.confidence,
         heat_dissipation_failure:
-          data.failure.probabilities['Heat Dissipation Failure'],
-        random_failures: data.failure.probabilities['Random Failures'],
-        overstrain_failure: data.failure.probabilities['Overstrain Failure'],
-        power_failure: data.failure.probabilities['Power Failure'],
-        tool_wear_failure: data.failure.probabilities['Tool Wear Failure'],
+          data.probabilities['Heat Dissipation Failure'],
+        random_failures: data.probabilities['Random Failures'],
+        overstrain_failure: data.probabilities['Overstrain Failure'],
+        power_failure: data.probabilities['Power Failure'],
+        tool_wear_failure: data.probabilities['Tool Wear Failure'],
       }));
 
-    return result;
+    return formatted;
   }
   async _predict(payload) {
     return new Promise((resolve, reject) => {

@@ -26,10 +26,10 @@ export const up = (pgm) => {
       type: 'varchar(255)',
       notNull: true,
     },
-    machine_id: {
+    sensor_data_id: {
       type: 'integer',
       notNull: true,
-      references: 'machines',
+      references: 'sensor_data',
       onDelete: 'CASCADE',
     },
     created_at: {

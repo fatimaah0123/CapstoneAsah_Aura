@@ -6,14 +6,13 @@ class PredictController {
     try {
       const input = Array.isArray(req.body) ? req.body : [req.body];
       predictValidator.validateCreatePredict(input);
-      await PredictService.createSensorData(input);
-      const result = await PredictService.createPredicts(input);
+      const sensorData = await PredictService.createSensorData(input);
+      await PredictService.createPredicts(sensorData);
 
-      if (!result) {
-        return next(new AppError('Gagal membuat prediksi', 400));
-      }
-
-      res.status(200).json({ status: 'success', message: 'Prediksi berhasil' });
+      res.status(200).json({
+        status: 'success',
+        message: 'Prediksi berhasil',
+      });
     } catch (error) {
       next(error);
     }
