@@ -12,6 +12,7 @@ class MaintenanceTicketsService {
           mt.name_pic,
           mt.date,
           mt.additional_notes,
+          mt.image,
           mt.status,
           mt.machine_id,
           m.name as machine_name

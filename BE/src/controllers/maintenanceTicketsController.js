@@ -1,4 +1,5 @@
 import MaintenanceTicketsService from '../services/MaintenanceTicketsService.js';
+import { maintenanceTicketValidator } from '../validators/maintenanceTicket/index.js';
 
 import AppError from '../utils/AppError.js';
 
@@ -41,7 +42,9 @@ class MaintenanceTicketsController {
 
   async createMaintenanceTicket(req, res, next) {
     try {
-      const ticketData = req.body;
+      const ticketData = maintenanceTicketValidator.validateMaintenanceTicket(
+        req.body
+      );
       const newTicket = await MaintenanceTicketsService.createMaintenanceTicket(
         ticketData
       );
@@ -59,7 +62,9 @@ class MaintenanceTicketsController {
   async updateMaintenanceTicket(req, res, next) {
     try {
       const { id } = req.params;
-      const ticketData = req.body;
+      const ticketData = maintenanceTicketValidator.validateMaintenanceTicket(
+        req.body
+      );
 
       const updatedTicket =
         await MaintenanceTicketsService.updateMaintenanceTicket(id, ticketData);
