@@ -1,8 +1,8 @@
 import express from 'express';
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import cors from 'cors';
 
-dotenv.config({ path: '../.env' });
+// dotenv.config({ path: '../.env' });
 
 import AppError from './utils/AppError.js';
 
