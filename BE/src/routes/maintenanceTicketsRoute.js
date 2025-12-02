@@ -1,16 +1,15 @@
 import express from 'express';
-import MaintenanceTicketsController from '../controllers/MaintenanceTicketsController.js';
+import MaintenanceTicketsController from '../controllers/maintenanceTicketsController.js';
 
 const Router = express.Router();
 
-Router.get('/', MaintenanceTicketsController.getAllMaintenanceTickets);
+Router.route('/')
+  .get(MaintenanceTicketsController.getAllMaintenanceTickets)
+  .post(MaintenanceTicketsController.createMaintenanceTicket);
 
-Router.get('/:id', MaintenanceTicketsController.getMaintenanceTicketById);
-
-Router.post('/', MaintenanceTicketsController.createMaintenanceTicket);
-
-Router.put('/:id', MaintenanceTicketsController.updateMaintenanceTicket);
-
-Router.delete('/:id', MaintenanceTicketsController.deleteMaintenanceTicket);
+Router.route('/:id')
+  .get(MaintenanceTicketsController.getMaintenanceTicketById)
+  .put(MaintenanceTicketsController.updateMaintenanceTicket)
+  .delete(MaintenanceTicketsController.deleteMaintenanceTicket);
 
 export default Router;
