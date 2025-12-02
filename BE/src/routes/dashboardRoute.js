@@ -7,4 +7,11 @@ Router.get('/summary', DashboardController.getDashboardSummary);
 
 Router.get('/trend', DashboardController.getDashboardTrend);
 
+Router.get('/stats', DashboardController.getDashboardStats);
+
+Router.get(
+  '/failure-stat/:id/recommendation',
+  DashboardController.getFailureStatByID
+);
+
 export default Router;
