@@ -1,5 +1,5 @@
 import MaintenanceTicketsService from '../services/MaintenanceTicketsService.js';
-import { maintenanceTicketValidator } from '../validators/predict/index.js';
+import { maintenanceTicketValidator } from '../validators/maintenanceTicket/index.js';
 
 import AppError from '../utils/AppError.js';
 

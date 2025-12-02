@@ -28,6 +28,7 @@ export const up = (pgm) => {
     date: {
       type: 'timestamp',
       notNull: true,
+      default: pgm.func('CURRENT_TIMESTAMP'),
     },
     estimated_duration: {
       type: 'varchar(255)',
