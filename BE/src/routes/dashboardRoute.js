@@ -10,7 +10,7 @@ Router.get('/trend', DashboardController.getDashboardTrend);
 Router.get('/stats', DashboardController.getDashboardStats);
 
 Router.get(
-  '/failure-stat/:id/recommendation',
+  '/failure-stats/:id/recommendation',
   DashboardController.getFailureStatByID
 );
 
