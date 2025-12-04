@@ -6,7 +6,7 @@ const prompts = {
     new SystemMessage(
       `Kamu adalah assistant yang memilih mesin relevan untuk pertanyaan user. Balas **HANYA** dengan JSON array sesuai aturan berikut:
 
-      1. Pertanyaan tentang mesin yang berpotensi terkena kerusakan/anomali:
+      1. Pertanyaan tentang mesin yang berpotensi/mungkin terkena kerusakan/anomali:
         Balas: ["failure"]
 
       2. Pertanyaan berdasarkan nama mesin:

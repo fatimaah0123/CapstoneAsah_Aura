@@ -7,12 +7,13 @@ const PredictiveAlertBar = ({ alert, onCreateTicket }) => (
       <div className="flex items-start gap-3">
         <AlertTriangle className="w-6 h-6 flex-shrink-0 mt-1" />
         <div>
-          <h3 className="font-bold text-lg mb-1">⚠️ PERINGATAN KRITIS</h3>
+          <h3 className="font-bold text-lg mb-1">{alert.status}</h3>
           <p className="text-sm opacity-95">
-            <span className="font-semibold">{alert.assetName}</span> - {alert.failure}
+            <span className="font-semibold">{alert.name}</span> {alert.failure}
           </p>
           <p className="text-sm opacity-90 mt-1">
-            Estimasi RUL: <span className="font-bold">{alert.rul}</span> | Health Score: <span className="font-bold">{alert.healthScore}%</span>
+            Estimasi RUL:{' '}
+            <span className="font-bold">{alert.rul_hours} hours</span>
           </p>
         </div>
       </div>

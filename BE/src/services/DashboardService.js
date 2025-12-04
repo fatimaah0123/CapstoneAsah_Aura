@@ -28,24 +28,29 @@ class DashboardService {
       const machineCritical = result.rows.filter(
         (machine) => machine.status === 'CRITICAL'
       );
-      return {
-        totalMachine: {
+
+      return [
+        {
+          title: 'Total Aset',
           value: totalMachines,
           rate: 100,
         },
-        machineNormal: {
+        {
+          title: 'Normal',
           value: machineNormal.length,
           rate: (machineNormal.length / totalMachines) * 100,
         },
-        machineWarning: {
+        {
+          title: 'Warning',
           value: machineWarning.length,
           rate: (machineWarning.length / totalMachines) * 100,
         },
-        machineCritical: {
+        {
+          title: 'Critical',
           value: machineCritical.length,
           rate: (machineCritical.length / totalMachines) * 100,
         },
-      };
+      ];
     } catch (error) {
       throw new AppError(
         `Terjadi kesalahan dalam mengambil data dashboard summary : ${error.message}`,

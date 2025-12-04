@@ -3,6 +3,6 @@ import express from 'express';
 
 const Router = express.Router();
 
-Router.get('/', ChatbotController.askChatbot);
+Router.post('/', ChatbotController.askChatbot);
 
 export default Router;

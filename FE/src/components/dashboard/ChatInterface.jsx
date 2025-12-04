@@ -1,48 +1,70 @@
-import React, { useState } from 'react';
-import { Activity } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
-const ChatInterface = () => {
-  const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Halo! Saya AURA Copilot. Bagaimana saya bisa membantu Anda menganalisis data aset hari ini?' }
-  ]);
+const ChatInterface = ({ userChat, botChat, setUserChat, chatBotAnswer }) => {
   const [input, setInput] = useState('');
+  const scrollRef = useRef(null);
 
-  const handleSend = () => {
+  const initialBotMessage = 'Halo! Ada yang bisa saya bantu?';
+
+  const handleSend = async () => {
     if (!input.trim()) return;
-    
-    setMessages([...messages, 
-      { role: 'user', text: input },
-      { role: 'assistant', text: 'Fitur chat AI sedang dalam pengembangan. Saya akan segera bisa membantu Anda menganalisis data aset secara real-time!' }
-    ]);
+
+    setUserChat((prev) => [...(prev || []), input]); // gunakan updater function
     setInput('');
+
+    await chatBotAnswer(input);
   };
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [userChat, botChat]);
+
+  // Build messages array: pesan awal + user & bot chat kronologis
+  const safeUserChat = userChat || [];
+  const safeChatBot = botChat || [];
+  const messages = [
+    { role: 'assistant', text: initialBotMessage }, // selalu di atas
+    ...safeUserChat
+      .map((text, i) => [
+        { role: 'user', text },
+        { role: 'assistant', text: safeChatBot[i] || '' }, // jawaban bot pasangannya
+      ])
+      .flat(),
+  ];
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col h-full">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Activity className="w-5 h-5 text-cyan-500" />
           AURA Copilot
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">AI Assistant untuk analisis prediktif</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          AI Assistant untuk analisis prediktif
+        </p>
       </div>
-      
+
       <div className="flex-1 p-4 overflow-y-auto space-y-3">
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`
-              max-w-[80%] p-3 rounded-lg text-sm
-              ${msg.role === 'user' 
-                ? 'bg-cyan-500 text-white' 
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-              }
-            `}>
+          <div
+            key={i}
+            className={`flex ${
+              msg.role === 'user' ? 'justify-end' : 'justify-start'
+            }`}
+          >
+            <div
+              className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                msg.role === 'user'
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+              }`}
+            >
               {msg.text}
             </div>
           </div>
         ))}
+        <div ref={scrollRef} />
       </div>
-      
+
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex gap-2">
           <input

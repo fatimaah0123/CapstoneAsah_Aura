@@ -5,27 +5,31 @@ class ChatbotRetrieverService {
   async getLatestSensorPredictions() {
     try {
       const query = `
-      SELECT DISTINCT ON (m.id)
-        m.id AS machine_id,
-        m.name AS machine_name,
-        mr.status,
-        mr.rul_hours AS RUL,
-        mr.priority,
-        mr.action,
-        fs.type AS failure_type,
-        fs.confidence AS failure_confidence,
-        fs.heat_dissipation_failure,
-        fs.tool_wear_failure,
-        fs.overstrain_failure,
-        fs.random_failures,
-        fs.power_failure
-      FROM machines AS m
-      JOIN sensor_data AS sd ON m.id = sd.machine_id
-      JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
-      LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
-	    WHERE mr.status = 'WARNING' or mr.status = 'CRITICAL'
-      ORDER BY m.id, sd.date_time DESC
-	    LIMIT 5
+      WITH latest_per_machine AS (
+        SELECT DISTINCT ON (m.id)
+          m.id AS machine_id,
+          m.name AS machine_name,
+          mr.status,
+          mr.rul_hours AS RUL,
+          mr.priority,
+          mr.action,
+          fs.type AS failure_type,
+          fs.confidence AS failure_confidence,
+          fs.heat_dissipation_failure,
+          fs.tool_wear_failure,
+          fs.overstrain_failure,
+          fs.random_failures,
+          fs.power_failure
+        FROM machines AS m
+        JOIN sensor_data AS sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
+        LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
+        ORDER BY m.id, sd.date_time DESC
+      )
+      SELECT *
+        FROM latest_per_machine
+      WHERE status in ('WARNING', 'CRITICAL')
+      LIMIT 5
       `;
 
       const result = await pool.query(query);
@@ -41,29 +45,32 @@ class ChatbotRetrieverService {
   async getMachineStatusById(id) {
     try {
       const query = `
-      SELECT DISTINCT ON (m.id)
-        m.id AS machine_id,
-        m.name AS machine_name,
-        mr.status,
-        mr.rul_hours AS RUL,
-        mr.priority,
-        mr.action,
-        fs.type AS failure_type,
-        fs.confidence AS failure_confidence,
-        fs.heat_dissipation_failure,
-        fs.tool_wear_failure,
-        fs.overstrain_failure,
-        fs.random_failures,
-        fs.power_failure
-      FROM machines AS m
-      JOIN sensor_data AS sd ON m.id = sd.machine_id
-      JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
-      LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
-	    WHERE m.id = $1
-      ORDER BY m.id, sd.date_time DESC
-      limit 1
+      WITH latest_per_machine AS (
+        SELECT DISTINCT ON (m.id)
+          m.id AS machine_id,
+          m.name AS machine_name,
+          mr.status,
+          mr.rul_hours AS RUL,
+          mr.priority,
+          mr.action,
+          fs.type AS failure_type,
+          fs.confidence AS failure_confidence,
+          fs.heat_dissipation_failure,
+          fs.tool_wear_failure,
+          fs.overstrain_failure,
+          fs.random_failures,
+          fs.power_failure
+        FROM machines AS m
+        JOIN sensor_data AS sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
+        LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
+        ORDER BY m.id, sd.date_time DESC
+      )
+      SELECT *
+        FROM latest_per_machine
+      WHERE machine_id = $1
+      LIMIT 1
       `;
-
       const result = await pool.query(query, [id]);
 
       if (result.rows.length === 0) {
@@ -81,27 +88,31 @@ class ChatbotRetrieverService {
   async getMachineStatusByName(name) {
     try {
       const query = `
-      SELECT DISTINCT ON (m.id)
-        m.id AS machine_id,
-        m.name AS machine_name,
-        mr.status,
-        mr.rul_hours AS RUL,
-        mr.priority,
-        mr.action,
-        fs.type AS failure_type,
-        fs.confidence AS failure_confidence,
-        fs.heat_dissipation_failure,
-        fs.tool_wear_failure,
-        fs.overstrain_failure,
-        fs.random_failures,
-        fs.power_failure
-      FROM machines AS m
-      JOIN sensor_data AS sd ON m.id = sd.machine_id
-      JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
-      LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
-	    WHERE m.name ilike $1
-      ORDER BY m.id, sd.date_time DESC
-      limit 1
+      WITH latest_per_machine AS (
+        SELECT DISTINCT ON (m.id)
+          m.id AS machine_id,
+          m.name AS machine_name,
+          mr.status,
+          mr.rul_hours AS RUL,
+          mr.priority,
+          mr.action,
+          fs.type AS failure_type,
+          fs.confidence AS failure_confidence,
+          fs.heat_dissipation_failure,
+          fs.tool_wear_failure,
+          fs.overstrain_failure,
+          fs.random_failures,
+          fs.power_failure
+        FROM machines AS m
+        JOIN sensor_data AS sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
+        LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
+        ORDER BY m.id, sd.date_time DESC
+      )
+      SELECT *
+        FROM latest_per_machine
+      WHERE machine_name ilike $1
+      LIMIT 1
       `;
 
       const result = await pool.query(query, [name]);
@@ -122,27 +133,31 @@ class ChatbotRetrieverService {
   async getMachineStatusByType(type) {
     try {
       const query = `
-      SELECT DISTINCT ON (m.id)
-        m.id AS machine_id,
-        m.name AS machine_name,
-        mr.status,
-        mr.rul_hours AS RUL,
-        mr.priority,
-        mr.action,
-        fs.type AS failure_type,
-        fs.confidence AS failure_confidence,
-        fs.heat_dissipation_failure,
-        fs.tool_wear_failure,
-        fs.overstrain_failure,
-        fs.random_failures,
-        fs.power_failure
-      FROM machines AS m
-      JOIN sensor_data AS sd ON m.id = sd.machine_id
-      JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
-      LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
-	    WHERE fs.type ilike $1
-      ORDER BY m.id, sd.date_time DESC
-	    LIMIT 5
+      WITH latest_per_machine AS (
+        SELECT DISTINCT ON (m.id)
+          m.id AS machine_id,
+          m.name AS machine_name,
+          mr.status,
+          mr.rul_hours AS RUL,
+          mr.priority,
+          mr.action,
+          fs.type AS failure_type,
+          fs.confidence AS failure_confidence,
+          fs.heat_dissipation_failure,
+          fs.tool_wear_failure,
+          fs.overstrain_failure,
+          fs.random_failures,
+          fs.power_failure
+        FROM machines AS m
+        JOIN sensor_data AS sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
+        LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
+        ORDER BY m.id, sd.date_time DESC
+      )
+      SELECT *
+        FROM latest_per_machine
+      WHERE failure_type ilike $1
+      LIMIT 5
       `;
 
       const result = await pool.query(query, [type]);
@@ -158,27 +173,31 @@ class ChatbotRetrieverService {
   async getMachineStatusByStatus(status) {
     try {
       const query = `
-      SELECT DISTINCT ON (m.id)
-        m.id AS machine_id,
-        m.name AS machine_name,
-        mr.status,
-        mr.rul_hours AS RUL,
-        mr.priority,
-        mr.action,
-        fs.type AS failure_type,
-        fs.confidence AS failure_confidence,
-        fs.heat_dissipation_failure,
-        fs.tool_wear_failure,
-        fs.overstrain_failure,
-        fs.random_failures,
-        fs.power_failure
-      FROM machines AS m
-      JOIN sensor_data AS sd ON m.id = sd.machine_id
-      JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
-      LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
-	    WHERE mr.status = $1
-      ORDER BY m.id, sd.date_time DESC
-	    LIMIT 5
+      WITH latest_per_machine AS (
+        SELECT DISTINCT ON (m.id)
+          m.id AS machine_id,
+          m.name AS machine_name,
+          mr.status,
+          mr.rul_hours AS RUL,
+          mr.priority,
+          mr.action,
+          fs.type AS failure_type,
+          fs.confidence AS failure_confidence,
+          fs.heat_dissipation_failure,
+          fs.tool_wear_failure,
+          fs.overstrain_failure,
+          fs.random_failures,
+          fs.power_failure
+        FROM machines AS m
+        JOIN sensor_data AS sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
+        LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
+        ORDER BY m.id, sd.date_time DESC
+      )
+      SELECT *
+        FROM latest_per_machine
+      WHERE status ilike $1
+      LIMIT 5
       `;
 
       const result = await pool.query(query, [status]);
@@ -194,27 +213,31 @@ class ChatbotRetrieverService {
   async getMachineStatusByPriority(priority) {
     try {
       const query = `
-      SELECT DISTINCT ON (m.id)
-        m.id AS machine_id,
-        m.name AS machine_name,
-        mr.status,
-        mr.rul_hours AS RUL,
-        mr.priority,
-        mr.action,
-        fs.type AS failure_type,
-        fs.confidence AS failure_confidence,
-        fs.heat_dissipation_failure,
-        fs.tool_wear_failure,
-        fs.overstrain_failure,
-        fs.random_failures,
-        fs.power_failure
-      FROM machines AS m
-      JOIN sensor_data AS sd ON m.id = sd.machine_id
-      JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
-      LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
-	    WHERE mr.priority = $1
-      ORDER BY m.id, sd.date_time DESC
-	    LIMIT 5
+      WITH latest_per_machine AS (
+        SELECT DISTINCT ON (m.id)
+          m.id AS machine_id,
+          m.name AS machine_name,
+          mr.status,
+          mr.rul_hours AS RUL,
+          mr.priority,
+          mr.action,
+          fs.type AS failure_type,
+          fs.confidence AS failure_confidence,
+          fs.heat_dissipation_failure,
+          fs.tool_wear_failure,
+          fs.overstrain_failure,
+          fs.random_failures,
+          fs.power_failure
+        FROM machines AS m
+        JOIN sensor_data AS sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
+        LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
+        ORDER BY m.id, sd.date_time DESC
+      )
+      SELECT *
+        FROM latest_per_machine
+      WHERE priority ilike $1
+      LIMIT 5
       `;
 
       const result = await pool.query(query, [priority]);
@@ -230,27 +253,31 @@ class ChatbotRetrieverService {
   async getMachineStatusBySmallestRUL(rul = 7) {
     try {
       const query = `
-      SELECT DISTINCT ON (m.id)
-        m.id AS machine_id,
-        m.name AS machine_name,
-        mr.status,
-        mr.rul_hours AS RUL,
-        mr.priority,
-        mr.action,
-        fs.type AS failure_type,
-        fs.confidence AS failure_confidence,
-        fs.heat_dissipation_failure,
-        fs.tool_wear_failure,
-        fs.overstrain_failure,
-        fs.random_failures,
-        fs.power_failure
-      FROM machines AS m
-      JOIN sensor_data AS sd ON m.id = sd.machine_id
-      JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
-      LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
-	    WHERE mr.rul_hours < $1
-      ORDER BY m.id, sd.date_time DESC
-	    LIMIT 5
+      WITH latest_per_machine AS (
+        SELECT DISTINCT ON (m.id)
+          m.id AS machine_id,
+          m.name AS machine_name,
+          mr.status,
+          mr.rul_hours AS RUL,
+          mr.priority,
+          mr.action,
+          fs.type AS failure_type,
+          fs.confidence AS failure_confidence,
+          fs.heat_dissipation_failure,
+          fs.tool_wear_failure,
+          fs.overstrain_failure,
+          fs.random_failures,
+          fs.power_failure
+        FROM machines AS m
+        JOIN sensor_data AS sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
+        LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
+        ORDER BY m.id, sd.date_time DESC
+      )
+      SELECT *
+        FROM latest_per_machine
+      WHERE RUL <= $1
+      LIMIT 5
       `;
 
       const result = await pool.query(query, [rul]);
@@ -266,27 +293,31 @@ class ChatbotRetrieverService {
   async getMachineStatusByHighestRUL(rul = 60) {
     try {
       const query = `
-      SELECT DISTINCT ON (m.id)
-        m.id AS machine_id,
-        m.name AS machine_name,
-        mr.status,
-        mr.rul_hours AS RUL,
-        mr.priority,
-        mr.action,
-        fs.type AS failure_type,
-        fs.confidence AS failure_confidence,
-        fs.heat_dissipation_failure,
-        fs.tool_wear_failure,
-        fs.overstrain_failure,
-        fs.random_failures,
-        fs.power_failure
-      FROM machines AS m
-      JOIN sensor_data AS sd ON m.id = sd.machine_id
-      JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
-      LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
-	    WHERE mr.rul_hours > $1
-      ORDER BY m.id, sd.date_time DESC
-	    LIMIT 5
+      WITH latest_per_machine AS (
+        SELECT DISTINCT ON (m.id)
+          m.id AS machine_id,
+          m.name AS machine_name,
+          mr.status,
+          mr.rul_hours AS RUL,
+          mr.priority,
+          mr.action,
+          fs.type AS failure_type,
+          fs.confidence AS failure_confidence,
+          fs.heat_dissipation_failure,
+          fs.tool_wear_failure,
+          fs.overstrain_failure,
+          fs.random_failures,
+          fs.power_failure
+        FROM machines AS m
+        JOIN sensor_data AS sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations AS mr ON mr.sensor_data_id = sd.id
+        LEFT JOIN failure_statistics AS fs ON fs.maintenance_recommendation_id = mr.id
+        ORDER BY m.id, sd.date_time DESC
+      )
+      SELECT *
+        FROM latest_per_machine
+      WHERE RUL >= $1
+      LIMIT 5
       `;
 
       const result = await pool.query(query, [rul]);
