@@ -3,9 +3,7 @@ import MaintenanceTicketsController from '../controllers/maintenanceTicketsContr
 
 const Router = express.Router();
 
-Router.route('/')
-  .get(MaintenanceTicketsController.getAllMaintenanceTickets)
-  .post(MaintenanceTicketsController.createMaintenanceTicket);
+Router.route('/').get(MaintenanceTicketsController.getAllMaintenanceTickets);
 
 Router.route('/:id')
   .get(MaintenanceTicketsController.getMaintenanceTicketById)

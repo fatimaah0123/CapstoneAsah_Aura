@@ -6,8 +6,10 @@ import AppError from '../utils/AppError.js';
 class MaintenanceTicketsController {
   async getAllMaintenanceTickets(req, res, next) {
     try {
-      const tickets =
-        await MaintenanceTicketsService.getAllMaintenanceTickets();
+      const { status = 'OPEN' } = req.query;
+      const tickets = await MaintenanceTicketsService.getAllMaintenanceTickets(
+        status
+      );
 
       res.status(200).json({
         status: 'success',
@@ -34,25 +36,6 @@ class MaintenanceTicketsController {
       res.status(200).json({
         status: 'success',
         data: ticket,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async createMaintenanceTicket(req, res, next) {
-    try {
-      const ticketData = maintenanceTicketValidator.validateMaintenanceTicket(
-        req.body
-      );
-      const newTicket = await MaintenanceTicketsService.createMaintenanceTicket(
-        ticketData
-      );
-
-      res.status(201).json({
-        status: 'success',
-        message: 'Maintenance ticket berhasil dibuat',
-        data: newTicket,
       });
     } catch (error) {
       next(error);

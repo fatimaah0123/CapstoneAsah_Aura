@@ -5,17 +5,10 @@ class DashboardService {
   async getDashboardSummary() {
     try {
       const query = `
-      WITH latest_sensor AS (
-        SELECT DISTINCT ON (machine_id) *
-        FROM sensor_data
-        ORDER BY machine_id, date_time DESC
-      )
-      SELECT 
-        mr.status
-      FROM latest_sensor ls
-      JOIN maintenance_recommendations mr 
-        ON mr.sensor_data_id = ls.id
-      ORDER BY ls.machine_id;
+      SELECT DISTINCT on (sd.machine_id) mr.status
+      FROM sensor_data sd
+      JOIN maintenance_recommendations mr ON sd.id = mr.sensor_data_id
+      ORDER BY sd.machine_id, sd.date_time desc
       `;
       const result = await pool.query(query);
       const totalMachines = result.rows.length;

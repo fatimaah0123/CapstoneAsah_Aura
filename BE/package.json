@@ -22,7 +22,9 @@
     "langchain": "^1.1.2",
     "node-pg-migrate": "^8.0.3",
     "pg": "^8.16.3",
-    "python-shell": "^5.0.0"
+    "python-shell": "^5.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

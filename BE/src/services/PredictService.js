@@ -28,7 +28,11 @@ class PredictService {
         await this._formattedFailureStatisticData(result, recommendations)
       );
       if (failureStatisticFormatted.length) {
-        await this._createFailureStatistics(failureStatisticFormatted);
+        const failure_id = await this._createFailureStatistics(
+          failureStatisticFormatted
+        );
+
+        await this._createMaintenanceTickets(failure_id);
       }
     } catch (error) {
       throw new AppError(error.message, error.statusCode);
@@ -141,7 +145,7 @@ class PredictService {
           `
           INSERT INTO failure_statistics (
             type, confidence, heat_dissipation_failure, random_failures, overstrain_failure, power_failure, tool_wear_failure, maintenance_recommendation_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7, $8) returning *
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7, $8) returning id
         `,
           [
             data.type,
@@ -163,6 +167,30 @@ class PredictService {
       await client.query('ROLLBACK;');
       throw new AppError(
         `Terdapat kesalahan dalam memproses data failure statistics : ${error.message}`,
+        400
+      );
+    } finally {
+      client.release();
+    }
+  }
+  async _createMaintenanceTickets(payload) {
+    const client = await this._pool.connect();
+    try {
+      await client.query('BEGIN;');
+      for (const data of payload) {
+        await client.query(
+          `
+          INSERT INTO maintenance_tickets (failure_statistics_id)
+          VALUES ($1)`,
+          [data.id]
+        );
+      }
+      await client.query('COMMIT;');
+      console.log('Maintenance Tickets inserted successfully');
+    } catch (error) {
+      await client.query('ROLLBACK;');
+      throw new AppError(
+        `Terdapat kesalahan dalam memproses data maintenance ticket : ${error.message}`,
         400
       );
     } finally {

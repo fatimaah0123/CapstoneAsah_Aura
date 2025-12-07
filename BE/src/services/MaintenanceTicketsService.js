@@ -4,24 +4,23 @@ import AppError from '../utils/AppError.js';
 const pool = new Pool();
 
 class MaintenanceTicketsService {
-  async getAllMaintenanceTickets() {
+  async getAllMaintenanceTickets(status) {
     try {
       const query = `
-        SELECT 
-          mt.id,
-          mt.name_pic,
-          mt.date,
-          mt.additional_notes,
-          mt.image,
-          mt.status,
-          mt.machine_id,
-          m.name as machine_name
-        FROM maintenance_tickets mt
-        LEFT JOIN machines m ON mt.machine_id = m.id
-        ORDER BY mt.created_at DESC
+        SELECT
+          m.id, m.name,
+          mr.status, mr.priority,
+          mt.id AS ticket_id, mt.status AS ticket_status, mt.created_at AS ticket_created_at
+        FROM machines m
+        JOIN sensor_data sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations mr ON sd.id = mr.sensor_data_id
+        JOIN failure_statistics fs ON mr.id = fs.maintenance_recommendation_id
+        JOIN maintenance_tickets mt ON fs.id = mt.id
+        WHERE mt.status = $1
+        ORDER BY m.id, sd.date_time DESC
       `;
 
-      const result = await pool.query(query);
+      const result = await pool.query(query, [status]);
       return result.rows;
     } catch (error) {
       throw new AppError(
@@ -33,23 +32,18 @@ class MaintenanceTicketsService {
   async getMaintenanceTicketById(id) {
     try {
       const query = `
-        SELECT 
-          id,
-          name_pic,
-          contact,
-          member,
-          date,
-          estimated_duration,
-          maintenance_type,
-          status,
-          part,
-          additional_notes,
-          image,
-          machine_id,
-          created_at,
-          updated_at
-        FROM maintenance_tickets 
-        WHERE id = $1
+        SELECT
+          m.id, m.name,
+          mr.status, mr.priority, mr.action,
+          fs.type, fs.confidence, fs.heat_dissipation_failure, fs.random_failures, fs.overstrain_failure, fs.power_failure, fs.tool_wear_failure,
+          mt.id AS ticket_id, mt.status AS ticket_status, mt.created_at AS ticket_created_at
+        FROM machines m
+        JOIN sensor_data sd ON m.id = sd.machine_id
+        JOIN maintenance_recommendations mr ON sd.id = mr.sensor_data_id
+        JOIN failure_statistics fs ON mr.id = fs.maintenance_recommendation_id
+        JOIN maintenance_tickets mt ON fs.id = mt.id
+        WHERE mt.id = $1
+        ORDER BY m.id, sd.date_time DESC
       `;
 
       const result = await pool.query(query, [id]);
@@ -66,101 +60,20 @@ class MaintenanceTicketsService {
     }
   }
 
-  async createMaintenanceTicket(ticketData) {
-    try {
-      const {
-        name_pic,
-        contact,
-        member,
-        date,
-        estimated_duration,
-        maintenance_type,
-        part,
-        additional_notes,
-        image,
-        machine_id,
-      } = ticketData;
-
-      const query = `
-        INSERT INTO maintenance_tickets (
-          name_pic, contact, member, date, estimated_duration, 
-          maintenance_type, status, part, additional_notes, image, machine_id
-        ) 
-        VALUES ($1, $2, $3, $4, $5, $6, 'open', $7, $8, $9, $10)
-        RETURNING *
-      `;
-
-      const values = [
-        name_pic,
-        contact,
-        JSON.stringify(member),
-        date,
-        estimated_duration,
-        maintenance_type,
-        part,
-        additional_notes,
-        image,
-        machine_id,
-      ];
-
-      const result = await pool.query(query, values);
-      return result.rows[0];
-    } catch (error) {
-      throw new AppError(`${error.message}`, 400);
-    }
-  }
-
   async updateMaintenanceTicket(id, ticketData) {
     try {
-      const {
-        name_pic,
-        contact,
-        member,
-        date,
-        estimated_duration,
-        maintenance_type,
-        status,
-        part,
-        additional_notes,
-        image,
-        machine_id,
-      } = ticketData;
+      const { status } = ticketData;
 
       const query = `
         UPDATE maintenance_tickets 
         SET 
-          name_pic = $1,
-          contact = $2,
-          member = $3,
-          date = $4,
-          estimated_duration = $5,
-          maintenance_type = $6,
-          status = $7,
-          part = $8,
-          additional_notes = $9,
-          image = $10,
-          machine_id = $11,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = $12
+          status = $1,
+          UPDATED_AT = NOW()
+        WHERE id = $2
         RETURNING *
       `;
 
-      const values = [
-        name_pic,
-        contact,
-        JSON.stringify(member),
-        date,
-        estimated_duration,
-        maintenance_type,
-        status,
-        part,
-        additional_notes,
-        image,
-        machine_id,
-        id,
-      ];
-
-      const result = await pool.query(query, values);
+      const result = await pool.query(query, [status, id]);
 
       if (result.rows.length === 0) {
         return null;
