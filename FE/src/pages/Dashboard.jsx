@@ -22,7 +22,7 @@ import SummaryCard from '../components/dashboard/SummaryCard';
 import TrendCard from '../components/dashboard/TrendCard';
 import FilterBar from '../components/dashboard/FilterBar';
 import ChatInterface from '../components/dashboard/ChatInterface';
-import CreateTicketPage from './CreateTicketPage';
+import CreateTicketPage from './CreateTicketPage.jsx';
 
 // Internal Component for Table (could be moved to separate file later)
 const AssetTable = ({ assets, onCreateTicket }) => (
@@ -131,7 +131,7 @@ const AssetTable = ({ assets, onCreateTicket }) => (
                   onClick={() => onCreateTicket(asset)}
                   className="text-cyan-600 dark:text-cyan-400 hover:underline text-sm font-medium"
                 >
-                  Buat Tiket
+                  Buat Jadwal
                 </button>
               </td>
             </tr>
