@@ -23,9 +23,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const menuItems = [
     { title: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-    { title: 'Jadwal Inspeksi', icon: <CalendarDays size={20} />, path: '/inspections' },
     { title: 'Tiket Maintenance', icon: <Ticket size={20} />, path: '/tickets' },
-    { title: 'Laporan', icon: <FileText size={20} />, path: '/reports' },
   ];
 
   return (

@@ -24,9 +24,7 @@ const Navbar = ({ isDark, toggleDark, onMenuClick }) => {
   // Menu yang sama dengan Sidebar
   const navLinks = [
     { title: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
-    { title: 'Jadwal', path: '/inspections', icon: <CalendarDays size={18} /> },
     { title: 'Tiket', path: '/tickets', icon: <Ticket size={18} /> },
-    { title: 'Laporan', path: '/reports', icon: <FileText size={18} /> },
   ];
 
   return (
