@@ -27,7 +27,7 @@ const Footer = () => {
             <div className="flex items-center gap-3">
               {/* Info Teks (Rata Kanan di Desktop) */}
               <div className="text-left md:text-right">
-                <p className="text-sm font-bold">Ir. Aidan Muharram Saputra</p>
+                <p className="text-sm font-bold">Ir. Fajar Teguh</p>
                 <p className="text-xs opacity-80">Manajer Teknis </p>
               </div>
               
