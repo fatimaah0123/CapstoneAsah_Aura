@@ -6,7 +6,7 @@ import AppError from '../utils/AppError.js';
 class MaintenanceTicketsController {
   async getAllMaintenanceTickets(req, res, next) {
     try {
-      const { status = 'OPEN' } = req.query;
+      const { status = '' } = req.query;
       const tickets = await MaintenanceTicketsService.getAllMaintenanceTickets(
         status
       );
