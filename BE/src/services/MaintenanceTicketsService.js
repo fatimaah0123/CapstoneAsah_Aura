@@ -15,9 +15,9 @@ class MaintenanceTicketsService {
         JOIN sensor_data sd ON m.id = sd.machine_id
         JOIN maintenance_recommendations mr ON sd.id = mr.sensor_data_id
         JOIN failure_statistics fs ON mr.id = fs.maintenance_recommendation_id
-        JOIN maintenance_tickets mt ON fs.id = mt.id
-        WHERE mt.status = $1
-        ORDER BY m.id, sd.date_time DESC
+        JOIN maintenance_tickets mt ON fs.id = mt.failure_statistics_id
+        WHERE ($1 = '' OR mt.status = $1::ticket_status_enum)
+        ORDER BY mt.created_at DESC
       `;
 
       const result = await pool.query(query, [status]);
