@@ -1,8 +1,6 @@
 import axios from 'axios';
 const BASE_URL = 'http://localhost:3000/';
 
-// DASHBOARD API 
-
 export const getDashboardSummary = async function () {
   try {
     const response = await axios.get(`${BASE_URL}api/dashboard/summary`, {
@@ -53,9 +51,6 @@ export const chatBot = async function (question) {
   }
 };
 
-//  MAINTENANCE TICKETS API 
-
-// 1. Ambil Semua Tiket (GET)
 export const getMaintenanceTickets = async function (status = '') {
   try {
     const url = status 
@@ -72,7 +67,6 @@ export const getMaintenanceTickets = async function (status = '') {
   }
 };
 
-// 2. Ambil Detail Tiket (GET)
 export const getMaintenanceTicketById = async function (id) {
   try {
     const response = await axios.get(`${BASE_URL}api/maintenance-tickets/${id}`, {
@@ -85,7 +79,6 @@ export const getMaintenanceTicketById = async function (id) {
   }
 };
 
-// 3. Update Tiket (PUT) - INI YANG MENYEBABKAN ERROR ANDA
 export const updateMaintenanceTicket = async function (id, data) {
   try {
     const response = await axios.put(`${BASE_URL}api/maintenance-tickets/${id}`, data, {
@@ -98,7 +91,6 @@ export const updateMaintenanceTicket = async function (id, data) {
   }
 };
 
-// 4. Hapus Tiket (DELETE)
 export const deleteMaintenanceTicket = async function (id) {
   try {
     const response = await axios.delete(`${BASE_URL}api/maintenance-tickets/${id}`, {
@@ -111,8 +103,14 @@ export const deleteMaintenanceTicket = async function (id) {
   }
 };
 
-// 5. Buat Tiket (POST) - Dummy
 export const postCreateTicket = async function (data) {
-  console.warn("API POST create ticket dipanggil (Simulasi)");
-  return Promise.resolve({ status: 'success', data: { ...data, id: Date.now() } });
+  try {
+    const response = await axios.post(`${BASE_URL}api/maintenance-tickets`, data, {
+      headers: { 'ngrok-skip-browser-warning': 'true' },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error posting create ticket:', error);
+    throw error;
+  }
 };

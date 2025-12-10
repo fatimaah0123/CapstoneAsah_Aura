@@ -10,7 +10,7 @@ import Footer from './components/layout/Footer';
 // Pages
 import Dashboard from './pages/Dashboard';
 import TicketsPage from './pages/TicketsPage';
-import CreateTicketPage from './pages/CreateTicketPage'; 
+import TicketDetailPage from './pages/TicketDetailPage';
 
 const App = () => {
   const [isDark, toggleDark] = useDarkMode();
@@ -34,9 +34,8 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/tickets/:id" element={<TicketDetailPage />} />
           <Route path="/tickets" element={<TicketsPage />} />
-          <Route path="/create-ticket" element={<CreateTicketPage />} />
-          {/* ... route lainnya ... */}
         </Routes>
       </main>
 
