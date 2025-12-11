@@ -1,5 +1,5 @@
 import axios from 'axios';
-const BASE_URL = 'http://localhost:3000/';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/';
 
 export const getDashboardSummary = async function () {
   try {
@@ -53,8 +53,8 @@ export const chatBot = async function (question) {
 
 export const getMaintenanceTickets = async function (status = '') {
   try {
-    const url = status 
-      ? `${BASE_URL}api/maintenance-tickets?status=${status}` 
+    const url = status
+      ? `${BASE_URL}api/maintenance-tickets?status=${status}`
       : `${BASE_URL}api/maintenance-tickets`;
 
     const response = await axios.get(url, {
@@ -69,9 +69,12 @@ export const getMaintenanceTickets = async function (status = '') {
 
 export const getMaintenanceTicketById = async function (id) {
   try {
-    const response = await axios.get(`${BASE_URL}api/maintenance-tickets/${id}`, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
-    });
+    const response = await axios.get(
+      `${BASE_URL}api/maintenance-tickets/${id}`,
+      {
+        headers: { 'ngrok-skip-browser-warning': 'true' },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error('Error fetching ticket detail:', error);
@@ -81,9 +84,13 @@ export const getMaintenanceTicketById = async function (id) {
 
 export const updateMaintenanceTicket = async function (id, data) {
   try {
-    const response = await axios.put(`${BASE_URL}api/maintenance-tickets/${id}`, data, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
-    });
+    const response = await axios.put(
+      `${BASE_URL}api/maintenance-tickets/${id}`,
+      data,
+      {
+        headers: { 'ngrok-skip-browser-warning': 'true' },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error('Error updating ticket:', error);
@@ -93,9 +100,12 @@ export const updateMaintenanceTicket = async function (id, data) {
 
 export const deleteMaintenanceTicket = async function (id) {
   try {
-    const response = await axios.delete(`${BASE_URL}api/maintenance-tickets/${id}`, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
-    });
+    const response = await axios.delete(
+      `${BASE_URL}api/maintenance-tickets/${id}`,
+      {
+        headers: { 'ngrok-skip-browser-warning': 'true' },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error('Error deleting ticket:', error);
@@ -105,9 +115,13 @@ export const deleteMaintenanceTicket = async function (id) {
 
 export const postCreateTicket = async function (data) {
   try {
-    const response = await axios.post(`${BASE_URL}api/maintenance-tickets`, data, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
-    });
+    const response = await axios.post(
+      `${BASE_URL}api/maintenance-tickets`,
+      data,
+      {
+        headers: { 'ngrok-skip-browser-warning': 'true' },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error('Error posting create ticket:', error);
