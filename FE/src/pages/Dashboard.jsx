@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart3, CheckCircle, AlertCircle, AlertTriangle,
-  Crosshair, Thermometer, Clock, ChevronLeft, ChevronRight // Tambahkan Icon Pagination
+  Crosshair, Thermometer, Clock, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import {
   getDashboardSummary, getDashboardTrend, getDashboardStat, chatBot,
@@ -15,8 +15,8 @@ import TrendCard from '../components/dashboard/TrendCard';
 import FilterBar from '../components/dashboard/FilterBar';
 import ChatInterface from '../components/dashboard/ChatInterface';
 
-// Internal Component for Table with Pagination Footer
-const AssetTable = ({ assets, onCreateTicket, pagination }) => (
+// Internal Component for Table with Simple Pagination Footer
+const AssetTable = ({ assets, pagination }) => (
   <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
     {/* Table Content */}
     <div className="overflow-x-auto min-h-[300px]">
@@ -28,13 +28,14 @@ const AssetTable = ({ assets, onCreateTicket, pagination }) => (
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Sensor Live</th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">RUL</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Aksi</th>
+            {/* Kolom Aksi DIHAPUS */}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
           {assets.length === 0 ? (
             <tr>
-              <td colSpan="6" className="px-4 py-8 text-center text-gray-500 text-sm">Tidak ada data aset ditemukan.</td>
+              {/* ColSpan disesuaikan jadi 5 karena kolom Aksi dihapus */}
+              <td colSpan="5" className="px-4 py-8 text-center text-gray-500 text-sm">Tidak ada data aset ditemukan.</td>
             </tr>
           ) : (
             assets.map((asset) => (
@@ -61,14 +62,7 @@ const AssetTable = ({ assets, onCreateTicket, pagination }) => (
                     <span>{asset.rul_hours.toFixed(0)} Hours</span>
                   </div>
                 </td>
-                <td className="px-4 py-4">
-                  <button
-                    onClick={() => onCreateTicket(asset)}
-                    className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shadow-sm"
-                  >
-                    Buat Jadwal
-                  </button>
-                </td>
+                {/* Tombol Aksi DIHAPUS */}
               </tr>
             ))
           )}
@@ -76,7 +70,7 @@ const AssetTable = ({ assets, onCreateTicket, pagination }) => (
       </table>
     </div>
 
-    {/* Integrated Pagination Footer (Sama seperti TicketsPage) */}
+    {/* Simplified Pagination Footer */}
     {pagination.total > 0 && (
       <div className="bg-gray-50 dark:bg-gray-900 p-4 border-t border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
         
@@ -95,23 +89,6 @@ const AssetTable = ({ assets, onCreateTicket, pagination }) => (
             <ChevronLeft size={16} />
             Sebelumnya
           </button>
-
-          {/* Page Numbers */}
-          <div className="hidden md:flex gap-1">
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => pagination.onPageChange(page)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition ${
-                    pagination.currentPage === page 
-                    ? 'bg-blue-600 text-white shadow-md' 
-                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  {page}
-                </button>
-            ))}
-          </div>
 
           <button 
             onClick={pagination.onNext}
@@ -136,7 +113,7 @@ const Dashboard = () => {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Tetap 5 data per halaman
+  const itemsPerPage = 5; 
   
   // Chatbot State
   const [userChat, setUserChat] = useState([]);
@@ -178,7 +155,7 @@ const Dashboard = () => {
     filteredAssets = filteredAssets.filter((a) => a.status === statusMap[statusFilter]);
   }
 
-  // Pagination Logic (Calculations)
+  // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentAssets = filteredAssets.slice(indexOfFirstItem, indexOfLastItem);
@@ -186,7 +163,6 @@ const Dashboard = () => {
 
   const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
   const goToPrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
-  const handlePageChange = (page) => setCurrentPage(page);
 
   // Reset page to 1 if filter changes
   useEffect(() => {
@@ -204,7 +180,6 @@ const Dashboard = () => {
     total: filteredAssets.length,
     onNext: goToNextPage,
     onPrev: goToPrevPage,
-    onPageChange: handlePageChange
   };
 
   return (
@@ -216,7 +191,6 @@ const Dashboard = () => {
         />
       )}
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {summary.map((data, index) => (
           <SummaryCard
@@ -236,10 +210,9 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          {/* Table with Integrated Pagination */}
           <AssetTable 
             assets={currentAssets} 
-            onCreateTicket={handleCreateTicket} 
+            // onCreateTicket dihapus dari sini karena tombol aksi sudah tidak ada
             pagination={paginationProps} 
           />
         </div>

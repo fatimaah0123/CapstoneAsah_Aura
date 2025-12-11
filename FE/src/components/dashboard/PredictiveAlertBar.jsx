@@ -17,13 +17,6 @@ const PredictiveAlertBar = ({ alert, onCreateTicket }) => (
           </p>
         </div>
       </div>
-      <button
-        onClick={onCreateTicket}
-        className="bg-white text-red-600 px-6 py-3 rounded-lg font-semibold hover:bg-red-50 transition-colors flex items-center gap-2 whitespace-nowrap shadow-md"
-      >
-        <Plus className="w-5 h-5" />
-        Buat Tiket SEGERA
-      </button>
     </div>
   </div>
 );

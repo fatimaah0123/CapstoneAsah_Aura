@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Calendar, Clock, CheckCircle, 
-  PlayCircle, CheckSquare, ChevronLeft, ChevronRight,
-  PauseCircle 
+  PlayCircle, CheckSquare, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { 
   getMaintenanceTickets, 
@@ -16,10 +15,12 @@ const TicketsPage = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // State
   const [filterStatus, setFilterStatus] = useState('OPEN');
   const [currentPage, setCurrentPage] = useState(1);        
   const [itemsPerPage] = useState(5); 
 
+  // Fetch Data Database
   const fetchTickets = async () => {
     setLoading(true);
     try {
@@ -31,7 +32,7 @@ const TicketsPage = () => {
         : apiTickets;
 
       setTickets(filtered);
-      setCurrentPage(1);
+      setCurrentPage(1); 
     } catch (error) {
       console.error("Gagal load tiket:", error);
     } finally {
@@ -43,6 +44,7 @@ const TicketsPage = () => {
     fetchTickets();
   }, [filterStatus]);
 
+  // Logic Pagination Sederhana
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentTickets = tickets.slice(indexOfFirstItem, indexOfLastItem);
@@ -51,19 +53,15 @@ const TicketsPage = () => {
   const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
   const goToPrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
+  // Logic Update Status (Tanpa Pending)
   const handleStatusChange = async (e, id, newStatus) => {
-    e.stopPropagation();
-    
-    let message = `Ubah status tiket ini menjadi ${newStatus}?`;
-    if (newStatus === 'PENDING') message = "Tunda pengerjaan tiket ini (Pending)?";
-    if (newStatus === 'IN_PROGRESS' && filterStatus === 'PENDING') message = "Lanjutkan pengerjaan tiket ini?";
-
-    if (!window.confirm(message)) return;
+    e.stopPropagation(); 
+    if (!window.confirm(`Ubah status tiket ini menjadi ${newStatus}?`)) return;
 
     setLoading(true);
     try {
       await updateMaintenanceTicket(id, { status: newStatus });
-      fetchTickets();
+      fetchTickets(); 
     } catch (err) {
       alert("Gagal update status.");
     } finally {
@@ -85,31 +83,31 @@ const TicketsPage = () => {
     const s = status ? status.toUpperCase() : '';
     if (s === 'OPEN') return 'text-red-600 bg-red-100 dark:bg-red-900/30';
     if (s === 'IN_PROGRESS') return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
-    if (s === 'PENDING') return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30';
     if (s === 'RESOLVED') return 'text-green-600 bg-green-100 dark:bg-green-900/30';
     return 'text-gray-600 bg-gray-100';
-  };
-
-  const getStatusIcon = (status) => {
-    const s = status ? status.toUpperCase() : '';
-    if (s === 'RESOLVED') return <CheckCircle size={20} />;
-    if (s === 'PENDING') return <PauseCircle size={20} />;
-    return <Clock size={20} />;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 pb-24">
       <div className="max-w-6xl mx-auto">
         
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manajemen Tiket</h1>
-            <p className="text-gray-500 text-sm">Data maintenance realtime.</p>
+            <p className="text-gray-500 text-sm">Data maintenance realtime dari Database.</p>
           </div>
+          <button 
+            onClick={() => navigate('/create-ticket')}
+            className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg hover:bg-blue-700 transition"
+          >
+            <Plus size={20} /> Buat Tiket Baru
+          </button>
         </div>
 
+        {/* Filter Tabs (Tanpa Pending) */}
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700 pb-1">
-          {['OPEN', 'IN_PROGRESS', 'PENDING', 'RESOLVED', ''].map(status => (
+          {['OPEN', 'IN_PROGRESS', 'RESOLVED', ''].map(status => (
             <button
               key={status || 'ALL'}
               onClick={() => setFilterStatus(status)}
@@ -124,8 +122,10 @@ const TicketsPage = () => {
           ))}
         </div>
 
+        {/* List Container */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           
+          {/* List Content */}
           <div className="p-4 space-y-3 min-h-[300px]">
             {loading ? (
               <div className="flex justify-center items-center h-40 text-gray-500">Memuat data database...</div>
@@ -146,7 +146,7 @@ const TicketsPage = () => {
                   >
                     <div className="flex items-center gap-4 w-full md:w-auto">
                        <div className={`p-3 rounded-full shrink-0 ${getStatusColor(status)}`}>
-                          {getStatusIcon(status)}
+                          {status === 'RESOLVED' ? <CheckCircle size={20} /> : <Clock size={20} />}
                        </div>
                        <div>
                           <div className="flex items-center gap-2 mb-1">
@@ -167,6 +167,7 @@ const TicketsPage = () => {
 
                     <div className="flex items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 mt-2 md:mt-0 border-gray-100">
                       
+                      {/* Actions: OPEN -> IN_PROGRESS -> RESOLVED */}
                       {status === 'OPEN' && (
                         <button 
                           onClick={(e) => handleStatusChange(e, ticketId, 'IN_PROGRESS')}
@@ -177,28 +178,11 @@ const TicketsPage = () => {
                       )}
 
                       {status === 'IN_PROGRESS' && (
-                        <>
-                          <button 
-                            onClick={(e) => handleStatusChange(e, ticketId, 'PENDING')}
-                            className="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 flex items-center gap-1 transition shadow-sm"
-                          >
-                            <PauseCircle size={14} /> Tunda
-                          </button>
-                          <button 
-                            onClick={(e) => handleStatusChange(e, ticketId, 'RESOLVED')}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 flex items-center gap-1 transition shadow-sm"
-                          >
-                            <CheckSquare size={14} /> Selesai
-                          </button>
-                        </>
-                      )}
-
-                      {status === 'PENDING' && (
                         <button 
-                          onClick={(e) => handleStatusChange(e, ticketId, 'IN_PROGRESS')}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 flex items-center gap-1 transition shadow-sm"
+                          onClick={(e) => handleStatusChange(e, ticketId, 'RESOLVED')}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 flex items-center gap-1 transition shadow-sm"
                         >
-                          <PlayCircle size={14} /> Lanjutkan
+                          <CheckSquare size={14} /> Selesai
                         </button>
                       )}
 
@@ -215,6 +199,7 @@ const TicketsPage = () => {
             )}
           </div>
 
+          {/* Pagination Sederhana (Footer) */}
           {tickets.length > 0 && (
             <div className="bg-gray-50 dark:bg-gray-800 p-4 border-t border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
                
@@ -231,22 +216,6 @@ const TicketsPage = () => {
                     <ChevronLeft size={16} />
                     Sebelumnya
                   </button>
-
-                  <div className="hidden md:flex gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                       <button
-                         key={page}
-                         onClick={() => setCurrentPage(page)}
-                         className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition ${
-                           currentPage === page 
-                           ? 'bg-blue-600 text-white shadow-md' 
-                           : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100'
-                         }`}
-                       >
-                         {page}
-                       </button>
-                    ))}
-                  </div>
 
                   <button 
                     onClick={goToNextPage}
