@@ -29,7 +29,7 @@ Dirancang untuk teknisi lapangan dan manajer operasional, AURA menggabungkan kek
 
 | 👩‍💻 Nama | 🆔 Student ID | 🎓 Learning Path | Kontribusi / Task |
 | :--- | :--- | :--- | :--- |
-| **Nafiza Mahadri Widyatamaka** | M183D5Y1435 | Machine Learning |  |
+| **Nafiza Mahadri Widyatamaka** | M183D5Y1435 | Machine Learning | Membuat datset sintetis, Melakukan EDA dan Feature engineering, Membuat pipeline untuk integrasi dengan backend |
 | **Fajar Teguh Permana** | R179D5Y0581 | Back-End |  |
 | **Kaesar Albert Bancin** | R891D5Y0935 | Back-End | |
 | **Siti Fatimah Nur Cahya** | R179D5X1857 | Front-end | Merancang arsitektur sistem, Mengembangkan Dashboard Frontend (React), Integrasi API Backend. |
