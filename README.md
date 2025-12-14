@@ -31,7 +31,7 @@ Dirancang untuk teknisi lapangan dan manajer operasional, AURA menggabungkan kek
 | :--- | :--- | :--- | :--- |
 | **Nafiza Mahadri Widyatamaka** | M183D5Y1435 | Machine Learning | Membuat dan menganalisis datsets sintetis, Melakukan EDA dan Feature engineering .|
 | **Fajar Teguh Permana** | R179D5Y0581 | Back-End |  |
-| **Kaesar Albert Bancin** | R891D5Y0935 | Back-End | |
+| **Kaesar Albert Bancin** | R891D5Y0935 | Back-End | Merancang Struktur table sql database, Merancang Route Endpoint API beserta Services dan Controller. |
 | **Siti Fatimah Nur Cahya** | R179D5X1857 | Front-end | Merancang arsitektur sistem, Mengembangkan Dashboard Frontend (React), Integrasi API Backend. |
 | **Azimatul Chamidah** | M179D5X0324 |Machine Learning | Membuat model time series dan klasifikasi, Membuat pipeline untuk integrasi dengan Backend.  |
 
