@@ -1,130 +1,151 @@
 import axios from 'axios';
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/';
 
-export const getDashboardSummary = async function () {
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+const api = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// ✅ Tambahkan interseptor untuk menyertakan Token di setiap request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('userToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ================= AUTHENTICATION =================
+
+export const loginUser = async (credentials) => {
   try {
-    const response = await axios.get(`${BASE_URL}api/dashboard/summary`, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching dashboard summary:', error);
-    throw error;
+    const res = await api.post('/api/auth/login', credentials);
+    // Simpan token dan data user jika login berhasil
+    if (res.data.token) {
+      localStorage.setItem('userToken', res.data.token);
+      localStorage.setItem('userData', JSON.stringify(res.data.user));
+    }
+    return res.data;
+  } catch (err) {
+    console.error('Error login:', err);
+    throw err.response?.data || { message: 'Login gagal, periksa koneksi Anda' };
+  }
+};
+export const registerUser = async (userData) => {
+  try {
+    const res = await api.post('/api/auth/register', userData);
+    return res.data;
+  } catch (err) {
+    console.error('Error register:', err);
+    throw err.response?.data || { message: 'Registrasi gagal' };
   }
 };
 
-export const getDashboardTrend = async function () {
+export const logoutUser = () => {
+  localStorage.removeItem('userToken');
+  localStorage.removeItem('userData');
+  window.location.href = '/login';
+};
+
+// ... (pertahankan fungsi getDashboardSummary, getMaintenanceTickets, dll yang sudah ada)
+
+// ================= DASHBOARD =================
+
+export const getDashboardSummary = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}api/dashboard/trend`, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching dashboard trend:', error);
-    throw error;
+    const res = await api.get('/api/dashboard/summary');
+    return res.data;
+  } catch (err) {
+    console.error('Error fetching dashboard summary:', err);
+    throw err;
   }
 };
 
-export const getDashboardStat = async function () {
+export const getDashboardTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}api/dashboard/stats`, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    throw error;
+    const res = await api.get('/api/dashboard/trend');
+    return res.data;
+  } catch (err) {
+    console.error('Error fetching dashboard trend:', err);
+    throw err;
   }
 };
 
-export const chatBot = async function (question) {
+export const getDashboardStat = async () => {
   try {
-    const response = await axios.post(
-      `${BASE_URL}api/chatbot`,
-      { question },
-      { headers: { 'ngrok-skip-browser-warning': 'true' } }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching chatbot:', error);
-    throw error;
+    const res = await api.get('/api/dashboard/stats');
+    return res.data;
+  } catch (err) {
+    console.error('Error fetching dashboard stats:', err);
+    throw err;
   }
 };
 
-export const getMaintenanceTickets = async function (status = '') {
-  try {
-    const url = status
-      ? `${BASE_URL}api/maintenance-tickets?status=${status}`
-      : `${BASE_URL}api/maintenance-tickets`;
+// ================= CHATBOT =================
 
-    const response = await axios.get(url, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
+export const chatBot = async (question) => {
+  try {
+    const res = await api.post('/api/chatbot', { question });
+    return res.data;
+  } catch (err) {
+    console.error('Error chatbot:', err);
+    throw err;
+  }
+};
+
+// ================= MAINTENANCE TICKETS =================
+
+export const getMaintenanceTickets = async (status = '') => {
+  try {
+    const res = await api.get('/api/maintenance-tickets', {
+      params: status ? { status } : {},
     });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching maintenance tickets:', error);
+    return res.data;
+  } catch (err) {
+    console.error('Error fetching maintenance tickets:', err);
     return { data: [] };
   }
 };
 
-export const getMaintenanceTicketById = async function (id) {
+export const getMaintenanceTicketById = async (id) => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}api/maintenance-tickets/${id}`,
-      {
-        headers: { 'ngrok-skip-browser-warning': 'true' },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching ticket detail:', error);
-    throw error;
+    const res = await api.get(`/api/maintenance-tickets/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error('Error fetching ticket detail:', err);
+    throw err;
   }
 };
 
-export const updateMaintenanceTicket = async function (id, data) {
+export const updateMaintenanceTicket = async (id, data) => {
   try {
-    const response = await axios.put(
-      `${BASE_URL}api/maintenance-tickets/${id}`,
-      data,
-      {
-        headers: { 'ngrok-skip-browser-warning': 'true' },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error updating ticket:', error);
-    throw error;
+    const res = await api.put(`/api/maintenance-tickets/${id}`, data);
+    return res.data;
+  } catch (err) {
+    console.error('Error updating ticket:', err);
+    throw err;
   }
 };
 
-export const deleteMaintenanceTicket = async function (id) {
+export const deleteMaintenanceTicket = async (id) => {
   try {
-    const response = await axios.delete(
-      `${BASE_URL}api/maintenance-tickets/${id}`,
-      {
-        headers: { 'ngrok-skip-browser-warning': 'true' },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting ticket:', error);
-    throw error;
+    const res = await api.delete(`/api/maintenance-tickets/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error('Error deleting ticket:', err);
+    throw err;
   }
 };
 
-export const postCreateTicket = async function (data) {
+export const postCreateTicket = async (data) => {
   try {
-    const response = await axios.post(
-      `${BASE_URL}api/maintenance-tickets`,
-      data,
-      {
-        headers: { 'ngrok-skip-browser-warning': 'true' },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error posting create ticket:', error);
-    throw error;
+    const res = await api.post('/api/maintenance-tickets', data);
+    return res.data;
+  } catch (err) {
+    console.error('Error creating ticket:', err);
+    throw err;
   }
 };

@@ -12,8 +12,8 @@ const PredictiveAlertBar = ({ alert, onCreateTicket }) => (
             <span className="font-semibold">{alert.name}</span> {alert.failure}
           </p>
           <p className="text-sm opacity-90 mt-1">
-            Estimasi RUL:{' '}
-            <span className="font-bold">{alert.rul_hours} hours</span>
+            Segera lakukan tindakan. Sisa masa pakai (RUL) kurang dari: {' '}
+            <span className="font-bold">{alert.rul_hours} jam.</span>
           </p>
         </div>
       </div>

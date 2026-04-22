@@ -2,23 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart3, CheckCircle, AlertCircle, AlertTriangle,
-  Crosshair, Thermometer, Clock, ChevronLeft, ChevronRight
+  Crosshair, Thermometer, Clock, ChevronLeft, ChevronRight,
+  Activity
 } from 'lucide-react';
 import {
-  getDashboardSummary, getDashboardTrend, getDashboardStat, chatBot,
-} from '../services/api.js';
+  getDashboardSummary, getDashboardTrend, getDashboardStat,
+} from '../services/api.js'; // Membuang import chatBot
 
 // Components
 import PredictiveAlertBar from '../components/dashboard/PredictiveAlertBar';
 import SummaryCard from '../components/dashboard/SummaryCard';
 import TrendCard from '../components/dashboard/TrendCard';
 import FilterBar from '../components/dashboard/FilterBar';
-import ChatInterface from '../components/dashboard/ChatInterface';
+// ChatInterface tidak lagi diimport di sini
 
-// Internal Component for Table with Simple Pagination Footer
 const AssetTable = ({ assets, pagination }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-    {/* Table Content */}
+  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
     <div className="overflow-x-auto min-h-[300px]">
       <table className="w-full">
         <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -28,13 +27,11 @@ const AssetTable = ({ assets, pagination }) => (
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Sensor Live</th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">RUL</th>
-            {/* Kolom Aksi DIHAPUS */}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
           {assets.length === 0 ? (
             <tr>
-              {/* ColSpan disesuaikan jadi 5 karena kolom Aksi dihapus */}
               <td colSpan="5" className="px-4 py-8 text-center text-gray-500 text-sm">Tidak ada data aset ditemukan.</td>
             </tr>
           ) : (
@@ -62,41 +59,31 @@ const AssetTable = ({ assets, pagination }) => (
                     <span>{asset.rul_hours.toFixed(0)} Hours</span>
                   </div>
                 </td>
-                {/* Tombol Aksi DIHAPUS */}
               </tr>
             ))
           )}
         </tbody>
       </table>
     </div>
-
-    {/* Simplified Pagination Footer */}
     {pagination.total > 0 && (
       <div className="bg-gray-50 dark:bg-gray-900 p-4 border-t border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
-        
-        {/* Info Data */}
         <div className="text-sm text-gray-600 dark:text-gray-400">
           Menampilkan <span className="font-bold text-gray-900 dark:text-white">{pagination.from}</span> - <span className="font-bold text-gray-900 dark:text-white">{pagination.to}</span> dari <span className="font-bold text-gray-900 dark:text-white">{pagination.total}</span> data
         </div>
-
-        {/* Controls */}
         <div className="flex items-center gap-2">
           <button 
             onClick={pagination.onPrev}
             disabled={pagination.currentPage === 1}
             className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            <ChevronLeft size={16} />
-            Sebelumnya
+            <ChevronLeft size={16} /> Sebelumnya
           </button>
-
           <button 
             onClick={pagination.onNext}
             disabled={pagination.currentPage === pagination.totalPages}
             className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            Selanjutnya
-            <ChevronRight size={16} />
+            Selanjutnya <ChevronRight size={16} />
           </button>
         </div>
       </div>
@@ -110,35 +97,27 @@ const Dashboard = () => {
   const [trend, setTrend] = useState([]);
   const [stat, setStat] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
-  
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; 
-  
-  // Chatbot State
-  const [userChat, setUserChat] = useState([]);
-  const [botChat, setBotChat] = useState([]);
+  // State chatBotAnswer, userChat, dan botChat telah dihapus
 
   const handleCreateTicket = (asset) => {
     navigate('/create-ticket', { state: { asset: asset } });
   };
 
-  const chatBotAnswer = async (question) => {
-    try {
-      const data = await chatBot(question);
-      setBotChat((prev) => [...prev, data.answer]);
-    } catch (error) {
-      console.error('Error fetching chatbot answer:', error);
-    }
-  };
+  // Fungsi chatBotAnswer telah dihapus
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const summaryData = await getDashboardSummary();
         setSummary(summaryData.data);
+        
         const trendData = await getDashboardTrend();
-        setTrend(trendData.data);
+        // Debug: Cek di console browser apakah trendData.data adalah Array
+        console.log("Trend Data API:", trendData.data); 
+        setTrend(trendData.data || []); // Pastikan fallback ke array kosong
+        
         const statData = await getDashboardStat();
         setStat(statData.data);
       } catch (error) {
@@ -148,14 +127,12 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  // Filter Logic
   let filteredAssets = [...stat];
   if (statusFilter !== 'all') {
     const statusMap = { CRITICAL: 'CRITICAL', WARNING: 'WARNING', NORMAL: 'NORMAL' };
     filteredAssets = filteredAssets.filter((a) => a.status === statusMap[statusFilter]);
   }
 
-  // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentAssets = filteredAssets.slice(indexOfFirstItem, indexOfLastItem);
@@ -164,14 +141,12 @@ const Dashboard = () => {
   const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
   const goToPrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
-  // Reset page to 1 if filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter]);
 
   const critcalAlert = stat.find((a) => a.status === 'CRITICAL');
 
-  // Pagination Props Object
   const paginationProps = {
     currentPage,
     totalPages,
@@ -183,7 +158,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 min-h-screen">
+      {/* Alert Utama jika ada kondisi kritis */}
       {critcalAlert && (
         <PredictiveAlertBar
           alert={critcalAlert}
@@ -191,36 +167,42 @@ const Dashboard = () => {
         />
       )}
 
+      {/* Grid Kartu Ringkasan (Summary Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {summary.map((data, index) => (
           <SummaryCard
             key={index}
             title={data.title}
             value={data.value}
-            icon={data.title === 'Total Aset' ? BarChart3 : data.title === 'Normal' ? CheckCircle : data.title === 'Warning' ? AlertCircle : AlertTriangle}
-            color={data.title === 'Total Aset' ? 'bg-blue-500' : data.title === 'Normal' ? 'bg-green-500' : data.title === 'Warning' ? 'bg-yellow-500' : 'bg-red-500'}
-            percentage={data.rate.toFixed(2)}
+            icon={
+              data.title === 'Total Aset' ? BarChart3 : 
+              data.title === 'Normal' ? CheckCircle : 
+              data.title === 'Warning' ? AlertCircle : AlertTriangle
+            }
+            color={
+              data.title === 'Total Aset' ? 'bg-blue-500' : 
+              data.title === 'Normal' ? 'bg-green-500' : 
+              data.title === 'Warning' ? 'bg-yellow-500' : 'bg-red-500'
+            }
+            percentage={(Number(data.rate) || 0).toFixed(2)}
           />
         ))}
       </div>
 
+      {/* Grafik Tren (Trend Card) */}
       <TrendCard data={trend} />
 
+      {/* Bar Filter Status */}
       <FilterBar statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          <AssetTable 
-            assets={currentAssets} 
-            // onCreateTicket dihapus dari sini karena tombol aksi sudah tidak ada
-            pagination={paginationProps} 
-          />
-        </div>
-
-        <div className="h-[600px]">
-          <ChatInterface userChat={userChat} botChat={botChat} setUserChat={setUserChat} chatBotAnswer={chatBotAnswer} />
-        </div>
+      {/* Layout Tabel Aset - SEKARANG FULL WIDTH */}
+      <div className="w-full space-y-4">
+        <AssetTable 
+          assets={currentAssets} 
+          pagination={paginationProps} 
+        />
       </div>
+      {/* Container h-[600px] untuk ChatInterface telah dihapus */}
     </div>
   );
 };

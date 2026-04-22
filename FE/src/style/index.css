@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    background-color: #E8Dbb3 !important;
+    @apply min-h-screen transition-colors duration-300;
+  }
+}
