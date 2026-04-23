@@ -102,10 +102,11 @@ const MachineManagement = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-stone-50 dark:bg-stone-800/50 border-b border-stone-100 dark:border-stone-800">
-                <th className="px-8 py-5 text-xs font-bold uppercase tracking-wider text-gray-400">Identitas Mesin</th>
-                <th className="px-8 py-5 text-xs font-bold uppercase tracking-wider text-gray-400 text-center">Kategori</th>
-                <th className="px-8 py-5 text-xs font-bold uppercase tracking-wider text-gray-400 text-center">Status</th>
-                <th className="px-8 py-5 text-xs font-bold uppercase tracking-wider text-gray-400 text-right">Tindakan</th>
+                <th className="px-8 py-5 text-xs  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest">Identitas Mesin</th>
+                <th className="px-8 py-5 text-xs  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-center">Kategori</th>
+                <th className="px-8 py-5 text-xs  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-center">Status</th>
+                <th className="px-8 py-5 text-xs  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-right">Tindakan</th>
+                
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100 dark:divide-stone-800">

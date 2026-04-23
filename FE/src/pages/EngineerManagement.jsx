@@ -88,10 +88,10 @@ const EngineerManagement = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-stone-50 dark:bg-stone-800/50 border-b border-stone-100 dark:border-stone-800">
-                <th className="px-8 py-5 text-xs font-bold uppercase tracking-wider text-gray-400">Informasi Personel</th>
-                <th className="px-8 py-5 text-xs font-bold uppercase tracking-wider text-gray-400 text-center">Jabatan</th>
-                <th className="px-8 py-5 text-xs font-bold uppercase tracking-wider text-gray-400 text-center">Status</th>
-                <th className="px-8 py-5 text-xs font-bold uppercase tracking-wider text-gray-400 text-right">Aksi</th>
+                <th className="px-8 py-5 text-xs  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest">Informasi Personel</th>
+                <th className="px-8 py-5 text-xs  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-center">Jabatan</th>
+                <th className="px-8 py-5 text-xs  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-center">Status</th>
+                <th className="px-8 py-5 text-xs  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100 dark:divide-stone-800">

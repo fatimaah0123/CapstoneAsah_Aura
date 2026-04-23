@@ -12,7 +12,7 @@ import {
 const TrendCard = ({ data }) => (
   <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-      Trend Kesehatan Aset (5 Hari Terakhir)
+      Trend Kesehatan Aset ( 7 Hari Terakhir )
     </h3>
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data}>

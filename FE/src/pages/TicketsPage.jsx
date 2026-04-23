@@ -9,7 +9,8 @@ import {
   ChevronRight,
   Trash2,
   Settings,
-  ClipboardCheck // Menambahkan ikon baru untuk riwayat perbaikan
+  ClipboardCheck,
+  Ticket // TAMBAHAN: Impor ikon Ticket agar tidak error
 } from 'lucide-react';
 import {
   getMaintenanceTickets,
@@ -28,6 +29,9 @@ const TicketsPage = () => {
   const [filterStatus, setFilterStatus] = useState('OPEN');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
+
+  // Tambahkan variabel pendukung untuk Header
+  const isViewOnly = filterStatus === 'RESOLVED';
 
   const [modalConfig, setModalConfig] = useState({ 
     isOpen: false, 
@@ -61,7 +65,6 @@ const TicketsPage = () => {
     fetchTickets();
   }, [filterStatus]);
 
-  // REVISI: Menambahkan fungsi openDeleteModal yang sebelumnya hilang di kode asli Anda
   const openDeleteModal = (id) => {
     setModalConfig({
       isOpen: true,
@@ -85,7 +88,6 @@ const TicketsPage = () => {
         setFilterStatus('IN_PROGRESS');
         fetchTickets();
       } else if (payload === 'RESOLVED') {
-        // Langsung arahkan ke halaman input laporan
         navigate(`/report/${id}`);
       }
     } catch (error) {
@@ -118,13 +120,19 @@ const TicketsPage = () => {
 
   return (
     <div className="p-6 lg:p-10 bg-gray-50 dark:bg-stone-950 min-h-screen transition-colors duration-500">
-      
-      {/* Header Section */}
-      <div className="mb-10 flex items-center gap-4 border-b border-stone-200 dark:border-stone-800 pb-6">
+      <div className="mb-10 flex items-center gap-4 border-b border-stone-200 dark:border-stone-800 pb-8">
+        <div className="p-4 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl shadow-lg shadow-blue-500/20 text-white">
+          <Ticket size={28} />
+        </div>
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white leading-none">
-            Manajemen Tiket
+            {isViewOnly ? "Histori Perbaikan" : "Manajemen Ticket"}
           </h2>
+          <p className="text-sm text-gray-500 dark:text-stone-400 mt-2 font-medium">
+            {isViewOnly 
+              ? "Detail riwayat perbaikan teknis unit" 
+              : "Sistem pelaporan perbaikan aset"}
+          </p>
         </div>
       </div>
 
@@ -151,9 +159,9 @@ const TicketsPage = () => {
           <table className="w-full text-left table-fixed">
             <thead>
               <tr className="bg-stone-50/50 dark:bg-stone-800/30 border-b border-stone-200 dark:border-stone-800">
-                <th className="w-1/3 px-8 py-6 text-[12px] font-bold uppercase tracking-widest text-stone-400">Informasi Tiket</th>
-                <th className="w-1/3 px-8 py-6 text-[12px] font-bold uppercase tracking-widest text-stone-400 text-center">Status</th>
-                <th className="w-1/3 px-8 py-6 text-[12px] font-bold uppercase tracking-widest text-stone-400 text-center">Aksi</th>
+                <th className="w-1/3 px-8 py-6 text-[12px]  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest">Informasi Tiket</th>
+                <th className="w-1/3 px-8 py-6 text-[12px]  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest  text-center">Status</th>
+                <th className="w-1/3 px-8 py-6 text-[12px]  text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
@@ -193,7 +201,6 @@ const TicketsPage = () => {
                             <Eye size={22} />
                           </button>
                           
-                          {/* AKSI UNTUK STATUS TERJADWAL */}
                           {status === 'OPEN' && (
                             <button
                               onClick={() => setModalConfig({ isOpen: true, id: ticketId, payload: 'IN_PROGRESS', type: 'info', title: 'Mulai Perbaikan?', message: 'Ubah status tiket menjadi DIKERJAKAN?' })}
@@ -204,7 +211,6 @@ const TicketsPage = () => {
                             </button>
                           )}
                           
-                          {/* AKSI UNTUK STATUS DIKERJAKAN */}
                           {status === 'IN_PROGRESS' && (
                             <button
                               onClick={() => setModalConfig({ isOpen: true, id: ticketId, payload: 'RESOLVED', type: 'info', title: 'Selesaikan Perbaikan?', message: 'Lanjutkan untuk mengisi laporan penyelesaian tiket?' })}
@@ -215,7 +221,6 @@ const TicketsPage = () => {
                             </button>
                           )}
 
-                          {/* REVISI: AKSI UNTUK STATUS SELESAI - Melihat Laporan Perbaikan */}
                           {(status === 'RESOLVED' || status === 'CLOSED') && (
                             <button
                               onClick={() => navigate(`/report/${ticketId}?view=true`)}

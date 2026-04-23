@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import useDarkMode from './hooks/useDarkMode';
 
@@ -8,8 +8,6 @@ import Sidebar from './components/layout/Sidebar';
 import Footer from './components/layout/Footer';
 
 // Pages
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage'; // Halaman Baru
 import Dashboard from './pages/Dashboard';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailPage from './pages/TicketDetailPage';
@@ -18,29 +16,28 @@ import ReportPage from './pages/ReportPage';
 import MachineManagement from './pages/MachineManagement';
 import EngineerManagement from './pages/EngineerManagement';
 
+// Catatan: LoginPage dan RegisterPage diimpor tapi tidak digunakan dalam routing sementara
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage'; 
+
 const App = () => {
   const [isDark, toggleDark] = useDarkMode();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Mengecek status login dari token di localStorage
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('userToken'));
+  // MODIFIKASI: Set default ke true agar langsung masuk ke dashboard selama pengembangan
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
   
   const location = useLocation();
   
-  // Tentukan apakah saat ini berada di halaman autentikasi (Login/Register)
+  // Halaman login/register tetap bisa diakses secara manual jika diperlukan lewat URL
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
-
-  // Fungsi untuk update status login saat sukses
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-  };
 
   return (
     <div className={`min-h-screen transition-colors ${isDark ? 'dark' : ''}`}>
       <div className="bg-gray-50 dark:bg-stone-950 flex flex-col min-h-screen">
         
-        {/* Render Navbar & Sidebar HANYA jika sudah login dan bukan di halaman auth */}
-        {isLoggedIn && !isAuthPage && (
+        {/* Navbar & Sidebar tampil otomatis karena isLoggedIn sudah true */}
+        {!isAuthPage && (
           <>
             <Navbar 
               isDark={isDark} 
@@ -57,39 +54,28 @@ const App = () => {
         {/* Konten Utama */}
         <main className={`flex-1 w-full ${!isAuthPage ? 'max-w-7xl mx-auto p-4 md:p-6' : ''}`}>
           <Routes>
-            {/* Public Routes */}
-            <Route 
-              path="/login" 
-              element={!isLoggedIn ? <LoginPage onLoginSuccess={handleLoginSuccess} /> : <Navigate to="/dashboard" />} 
-            />
-            <Route 
-              path="/register" 
-              element={!isLoggedIn ? <RegisterPage /> : <Navigate to="/dashboard" />} 
-            />
+            {/* Redirect root ke dashboard */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            
+            {/* Dashboard & Halaman Lainnya sekarang bisa diakses tanpa pengecekan token */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/tickets" element={<TicketsPage />} />
+            <Route path="/tickets/:id" element={<TicketDetailPage />} />
+            <Route path="/report/:id" element={<ReportPage />} />
+            <Route path="/chatbot" element={<ChatbotPage />} />
+            <Route path="/admin/machines" element={<MachineManagement />} />
+            <Route path="/admin/engineers" element={<EngineerManagement />} />
+            
+            {/* Route Auth tetap ada untuk testing UI jika diperlukan secara manual */}
+            <Route path="/login" element={<LoginPage onLoginSuccess={() => setIsLoggedIn(true)} />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-            {/* Protected Routes (Hanya untuk User Login) */}
-            <Route path="/" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />} />
-            <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />} />
-            
-            {/* Tiket & Pelaporan */}
-            <Route path="/tickets" element={isLoggedIn ? <TicketsPage /> : <Navigate to="/login" />} />
-            <Route path="/tickets/:id" element={isLoggedIn ? <TicketDetailPage /> : <Navigate to="/login" />} />
-            <Route path="/report/:id" element={isLoggedIn ? <ReportPage /> : <Navigate to="/login" />} />
-
-            {/* Fitur Lainnya */}
-            <Route path="/chatbot" element={isLoggedIn ? <ChatbotPage /> : <Navigate to="/login" />} />
-            
-            {/* Manajemen Admin (Hanya muncul jika login) */}
-            <Route path="/admin/machines" element={isLoggedIn ? <MachineManagement /> : <Navigate to="/login" />} />
-            <Route path="/admin/engineers" element={isLoggedIn ? <EngineerManagement /> : <Navigate to="/login" />} />
-            
-            {/* Catch-all: Jika route tidak ditemukan */}
-            <Route path="*" element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} replace />} />
+            {/* Catch-all: Lari ke dashboard jika route salah */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
 
-        {/* Footer hanya muncul jika sudah login dan bukan di halaman auth */}
-        {isLoggedIn && !isAuthPage && <Footer />}
+        {!isAuthPage && <Footer />}
       </div>
     </div>
   );
