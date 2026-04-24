@@ -50,8 +50,6 @@ export const logoutUser = () => {
   window.location.href = '/login';
 };
 
-// ... (pertahankan fungsi getDashboardSummary, getMaintenanceTickets, dll yang sudah ada)
-
 // ================= DASHBOARD =================
 
 export const getDashboardSummary = async () => {
@@ -149,3 +147,5 @@ export const postCreateTicket = async (data) => {
     throw err;
   }
 };
+
+export default api;

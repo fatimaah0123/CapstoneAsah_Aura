@@ -42,15 +42,9 @@ const ChatbotPage = () => {
   };
 
   return (
-    /* Ubah h-[82vh] menjadi h-[70vh] atau h-[75vh] untuk menaikkan posisi input.
-       max-w-4xl membuat tampilan lebih padat dan profesional di layar lebar.
-    */
     <div className="flex flex-col h-[72vh] max-w-4xl mx-auto space-y-3 p-4 md:p-0">
-      
-      {/* 1. Header Ringkas (Tetap Terlihat) */}
       <div className="flex items-center justify-between bg-white dark:bg-stone-900 p-3 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm shrink-0">
         <div className="flex items-center gap-3">
-          {/* FOKUS REVISI: Mengubah bg-purple-600 menjadi bg-cyan-600 untuk logo header */}
           <div className="p-2 bg-cyan-600 rounded-lg text-white">
             <Sparkles size={18} />
           </div>
@@ -67,7 +61,6 @@ const ChatbotPage = () => {
         </button>
       </div>
 
-      {/* 2. Area Chat (Tinggi Fleksibel namun terbatas) */}
       <div 
         ref={scrollRef}
         className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar min-h-0 bg-white/30 dark:bg-stone-900/10 rounded-2xl p-2"
@@ -75,7 +68,6 @@ const ChatbotPage = () => {
         {chatHistory.map((chat, index) => (
           <div key={index} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`flex gap-3 max-w-[85%] ${chat.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-              {/* FOKUS REVISI: Mengubah bg-purple-600 menjadi bg-cyan-600 untuk avatar BOT agar serasi dengan USER */}
               <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm 
                 ${chat.role === 'user' ? 'bg-cyan-600' : 'bg-cyan-600'}`}>
                 {chat.role === 'user' ? <User size={14} className="text-white" /> : <Bot size={14} className="text-white" />}
@@ -90,8 +82,6 @@ const ChatbotPage = () => {
           </div>
         ))}
       </div>
-
-      {/* 3. Input Form (Sangat Terlihat - Tanpa Scroll) */}
       <form onSubmit={handleSend} className="relative py-1 shrink-0">
         <div className="relative group">
           <input
