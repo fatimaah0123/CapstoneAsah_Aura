@@ -1,5 +1,4 @@
 import React from 'react';
-
 // Components
 import LoginBranding from '../components/auth/LoginBranding';
 import LoginForm from '../components/auth/LoginForm';

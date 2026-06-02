@@ -26,7 +26,6 @@ const useLogin = (onLoginSuccess) => {
 
     setLoading(true);
     try {
-      // Menggunakan data simulasi atau API asli
       await login(formData);
 
       if (onLoginSuccess) onLoginSuccess();

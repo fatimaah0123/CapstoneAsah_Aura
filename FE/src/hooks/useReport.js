@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { fetchTicketForReport, submitReport } from '../services/ticketService';
 
-const useReport = (id, navigate) => {
+const useReport = (id, isViewOnly, navigate) => {
   const [ticket, setTicket] = useState(null);
   const [technicianName, setTechnicianName] = useState('');
   const [damageDesc, setDamageDesc] = useState('');
   const [spareParts, setSpareParts] = useState('');
+  const [evidenceImage, setEvidenceImage] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const fetchTicketDetail = async () => {
@@ -14,6 +15,12 @@ const useReport = (id, navigate) => {
       if (data) {
         setTicket(data);
         setTechnicianName(data.technician_name || '');
+        // Jika mode view, isi semua field dari data riwayat yang sudah tersimpan
+        if (isViewOnly) {
+          setDamageDesc(data.report_description || '');
+          setSpareParts(data.spare_parts || '');
+          setEvidenceImage(data.evidence_image || null);
+        }
       }
     } catch (error) {
       console.error("Gagal mengambil rincian tiket:", error);
@@ -26,6 +33,7 @@ const useReport = (id, navigate) => {
 
   const handleSubmit = async (e, image) => {
     e.preventDefault();
+    if (isViewOnly) return; // Guard: mode view tidak bisa submit
     if (!image) return alert("Wajib melampirkan foto bukti!");
     setLoading(true);
     try {
@@ -50,6 +58,7 @@ const useReport = (id, navigate) => {
     technicianName, setTechnicianName,
     damageDesc, setDamageDesc,
     spareParts, setSpareParts,
+    evidenceImage, // image dari riwayat untuk mode view
     loading,
     handleSubmit,
   };

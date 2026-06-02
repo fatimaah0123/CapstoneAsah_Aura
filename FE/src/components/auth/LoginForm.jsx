@@ -1,74 +1,75 @@
-import React from 'react';
+// src/components/auth/LoginForm.jsx
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
-import { validatePassword } from '../../hooks/useLogin';
+// src/components/auth/LoginForm.jsx
+import { login as loginService } from '../../services/authServices';
 
-const LoginForm = ({ formData, setFormData, showPassword, setShowPassword, error, loading, handleLogin }) => {
+const LoginForm = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // 1. Panggil service login ke backend
+      const response = await loginService({ email, password });
+      const { token, user } = response;
+
+      // 2. Simpan token dan role ke localStorage
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('user_role', user.role); // Menyimpan 'admin' atau 'engineer'
+      localStorage.setItem('user_name', user.name);
+
+      // 3. Arahkan pengguna langsung ke halaman Dashboard utama
+      navigate('/dashboard');
+      
+    } catch (err) {
+      setError(err.message || 'Login gagal. Periksa kembali email dan password Anda.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <>
-      {error && (
-        <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-[11px] font-bold flex items-center gap-3">
-          <AlertCircle size={16} /> {error}
-        </div>
-      )}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Email</label>
+        <input 
+          type="email" 
+          value={email} 
+          onChange={(e) => setEmail(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          required 
+        />
+      </div>
 
-      <form onSubmit={handleLogin} className="space-y-5">
-        {/* Input ID */}
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest ml-1">ID Pegawai</label>
-          <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400" size={18} />
-            <input 
-              type="text" required placeholder="Masukkan ID Anda"
-              className="w-full bg-slate-950/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold"
-              onChange={(e) => setFormData({...formData, userId: e.target.value})}
-            />
-          </div>
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Password</label>
+        <input 
+          type="password" 
+          value={password} 
+          onChange={(e) => setPassword(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          required 
+        />
+      </div>
 
-        {/* Input Password dengan Keterangan Dinamis */}
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest ml-1">Password</label>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400" size={18} />
-            <input 
-              type={showPassword ? "text" : "password"} 
-              required placeholder="••••••••"
-              className={`w-full bg-slate-950/40 border ${formData.password && !validatePassword(formData.password) ? 'border-amber-500/50' : 'border-white/10'} rounded-2xl py-4 pl-12 pr-12 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold`}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
-            />
-            <button 
-              type="button" onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-white transition-colors"
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-          </div>
-        </div>
-
-        <button 
-          type="submit" disabled={loading}
-          className={`w-full ${loading ? 'bg-blue-800' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/40'} text-white font-black py-4 rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all mt-6 uppercase tracking-widest text-sm`}
-        >
-          {loading ? 'Memverifikasi...' : 'Masuk ke Sistem'}
-          {!loading && <ArrowRight size={18} />}
-        </button>
-
-        <div className="mt-8 text-center border-t border-white/5 pt-6">
-          <p className="text-blue-200/60 text-xs font-bold uppercase tracking-wider">
-            Belum memiliki akses?{' '}
-            <button 
-              type="button" onClick={() => navigate('/register')}
-              className="text-blue-400 hover:text-cyan-300 underline transition-colors"
-            >
-              Daftar di sini
-            </button>
-          </p>
-        </div>
-      </form>
-    </>
+      <button 
+        type="submit" 
+        disabled={isLoading}
+        className="w-full justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        {isLoading ? 'Sedang Memuat...' : 'Masuk'}
+      </button>
+    </form>
   );
 };
 

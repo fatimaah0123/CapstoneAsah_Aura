@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Sun, Moon, LayoutDashboard, Ticket, MessageSquare, UserCircle, Activity } from 'lucide-react';
+import { Menu, Sun, Moon, LayoutDashboard, Ticket, MessageSquare, UserCircle, Activity, Clock } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom'; 
 
 const ThemeToggle = ({ isDark, toggle }) => (
@@ -26,6 +26,7 @@ const navLinks = [
     // Menu Khusus Admin
     { title: 'Manajemen Mesin', path: '/admin/machines', icon: <Activity size={18} /> },
     { title: 'Manajemen Engineer', path: '/admin/engineers', icon: <UserCircle size={18} /> },
+    { title: 'Riwayat', path: '/admin/maintenance', icon: <Clock size={18} /> },
   ];
 
   return (
