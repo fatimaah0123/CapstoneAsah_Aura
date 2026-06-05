@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, Sun, Moon, LayoutDashboard, Ticket, MessageSquare, UserCircle, Activity, Clock } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom'; 
 
@@ -14,23 +14,57 @@ const ThemeToggle = ({ isDark, toggle }) => (
 const Navbar = ({ isDark, toggleDark, onMenuClick }) => {
   const location = useLocation();
 
+  // STATE DINAMIS NAMA PENGGUNA
+  const [userName, setUserName] = useState(() => {
+    const savedName = localStorage.getItem('user_name') || localStorage.getItem('name') || localStorage.getItem('nama');
+    return savedName || 'Siti Fatimah Nur Cahya'; 
+  });
+
+  // REVISI: Tambahkan state untuk memantau user_role secara dinamis di Navbar
+  const [userRole, setUserRole] = useState(() => {
+    return (localStorage.getItem('user_role') || 'engineer').toLowerCase();
+  });
+
+  // Ikut memantau jika sewaktu-waktu ada perpindahan akun atau role tanpa reload halaman
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedName = localStorage.getItem('user_name') || localStorage.getItem('name') || localStorage.getItem('nama');
+      if (savedName) setUserName(savedName);
+
+      const savedRole = localStorage.getItem('user_role');
+      if (savedRole) setUserRole(savedRole.toLowerCase());
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const isActive = (path) => {
     if (path === '/dashboard' && location.pathname === '/') return true;
     return location.pathname === path;
   };
 
-const navLinks = [
-    { title: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
-    { title: 'Tiket', path: '/tickets', icon: <Ticket size={18} /> },
-    { title: 'AI Copilot', path: '/chatbot', icon: <MessageSquare size={18} /> },
-    // Menu Khusus Admin
-    { title: 'Manajemen Mesin', path: '/admin/machines', icon: <Activity size={18} /> },
-    { title: 'Manajemen Engineer', path: '/admin/engineers', icon: <UserCircle size={18} /> },
-    { title: 'Riwayat', path: '/admin/maintenance', icon: <Clock size={18} /> },
+  // REVISI: Definisikan semua menu, lalu tambahkan properti "isAdminOnly"
+  const allNavLinks = [
+    { title: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} />, isAdminOnly: false },
+    { title: 'Tiket', path: '/tickets', icon: <Ticket size={18} />, isAdminOnly: false },
+    { title: 'AI Copilot', path: '/chatbot', icon: <MessageSquare size={18} />, isAdminOnly: false },
+    
+    // Menu Khusus Admin (isAdminOnly: true)
+    { title: 'Riwayat', path: '/admin/maintenance', icon: <Clock size={18} />, isAdminOnly: true },
+    { title: 'Manajemen Mesin', path: '/admin/machines', icon: <Activity size={18} />, isAdminOnly: true },
+    { title: 'Manajemen Engineer', path: '/admin/engineers', icon: <UserCircle size={18} />, isAdminOnly: true },
   ];
 
-  return (
+  // REVISI LOGIKA FILTER: Menyaring tautan menu berdasarkan role yang sedang aktif
+  const displayNavLinks = allNavLinks.filter(link => {
+    if (link.isAdminOnly) {
+      return userRole === 'admin'; // Hanya lolos saring jika role-nya adalah admin
+    }
+    return true; // Menu dasar otomatis lolos saring untuk semua role
+  });
 
+  return (
     <nav className="sticky top-0 z-30 w-full shadow-lg">
       
       {/* --- TOP BAR: GRADASI BIRU KE HITAM --- */}
@@ -70,7 +104,9 @@ const navLinks = [
                   <UserCircle size={28} className="m-auto mt-1.5 text-white" />
                 </div>
                 <div className="hidden md:block text-right">
-                  <p className="text-xs font-bold leading-none uppercase tracking-wide text-white">Siti Fatimah Nur Cahya</p>
+                  <p className="text-xs font-bold leading-none uppercase tracking-wide text-white">
+                    {userName}
+                  </p>
                 </div>
               </div>
             </div>
@@ -82,7 +118,8 @@ const navLinks = [
       <div className="bg-white/95 dark:bg-stone-950/95 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 hidden lg:block transition-all duration-500">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-start h-14">
           <div className="flex items-center">
-            {navLinks.map((link) => (
+            {/* Menggunakan variabel displayNavLinks yang sudah disaring berdasarkan role */}
+            {displayNavLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}

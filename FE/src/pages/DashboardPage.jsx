@@ -20,43 +20,40 @@ const DashboardPage = () => {
   const { summary, trend, stat } = useDashboard();
   const { statusFilter, setStatusFilter, currentAssets, paginationProps } = useDashboardFilter(stat);
   
-  // 1. Ambil Role Pengguna (Membaca dari App.jsx / localStorage tiruan)
-  // Untuk mencoba, Anda bisa mengubah default value ini secara manual 'admin' atau 'engineer'
-  const [userRole, setUserRole] = useState('admin'); 
+  // REVISI ROLE DINAMIS: Mengikuti session login murni di browser (sama dengan navbar/sidebar)
+  const [userRole, setUserRole] = useState(() => {
+    return localStorage.getItem('user_role') || 'engineer';
+  }); 
+  
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Sinkronisasi otomatis jika ada perubahan status peran di local storage browser
+  useEffect(() => {
+    const savedRole = localStorage.getItem('user_role');
+    if (savedRole) setUserRole(savedRole);
+  }, []);
 
   const handleCreateTicket = (asset) => {
     navigate('/create-ticket', { state: { asset: asset } });
   };
 
-  // 2. FILTER & SORTING BERDASARKAN URGENSI (Saran Industri)
-  // Mengurutkan asset: CRITICAL -> WARNING -> NORMAL
-// Ganti fungsi ini di dalam src/pages/DashboardPage.jsx
+  // REVISI URUTAN DATA: Murni berdasarkan sisa masa pakai (RUL) terkecil ke terbesar
   const getSortedAndFilteredAssets = () => {
     let assets = [...currentAssets];
 
-    // 1. Fitur Pencarian Mesin
+    // 1. Fitur Pencarian Mesin Real-time
     if (searchTerm) {
       assets = assets.filter(asset => 
-        asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.id.toString().includes(searchTerm)
+        (asset.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (asset.id || '').toString().includes(searchTerm)
       );
     }
 
-    // 2. Pengurutan Ganda: Berdasarkan Status UTAMA, lalu Berdasarkan RUL TERKECIL
-    const statusPriority = { 'CRITICAL': 1, 'WARNING': 2, 'NORMAL': 3 };
-    
+    // 2. Logika Sortir Murni Berdasarkan RUL Terkecil (Early Warning System)
     return assets.sort((a, b) => {
-      const priorityA = statusPriority[a.status] || 4;
-      const priorityB = statusPriority[b.status] || 4;
-
-      // Jika statusnya berbeda (misal Critical vs Warning), urutkan berdasarkan status
-      if (priorityA !== priorityB) {
-        return priorityA - priorityB;
-      }
-      
-      // JIKA STATUSNYA SAMA (seperti di gambar Anda), urutkan berdasarkan RUL terkecil di paling atas
-      return a.rul_hours - b.rul_hours;
+      const rulA = parseFloat(a.rul_hours || a.rul || a.remaining_useful_life || 0);
+      const rulB = parseFloat(b.rul_hours || b.rul || b.remaining_useful_life || 0);
+      return rulA - rulB;
     });
   };
 
@@ -66,21 +63,21 @@ const DashboardPage = () => {
   return (
     <div className="p-6 space-y-6 min-h-screen">
       
-      {/* HEADER DYNAMIC BERDASARKAN ROLE */}
+      {/* REVISI HEADER: Menyesuaikan judul dan deskripsi teks 100% berdasarkan Role */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 dark:border-stone-800 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-            Dashboard Admin {userRole === 'admin' ? '(Admin Mode)' : '(Engineer Mode)'}
+            {userRole === 'admin' ? 'Dashboard Utama Administrator' : 'Pusat Pemantauan Kerja Teknisi'}
           </h1>
           <p className="text-sm text-gray-500">
             {userRole === 'admin' 
-              ? 'Pantau kesehatan seluruh aset energi dan kelola registrasi mesin.' 
-              : 'Pantau jadwal perbaikan dan kondisi sensor live mesin tugas Anda.'}
+              ? 'Pantau metrik kesehatan seluruh aset energi dan kelola data registrasi mesin operasional.' 
+              : 'Pantau sisa masa pakai (RUL) sensor live mesin dan tindak lanjuti perintah perbaikan aktif Anda.'}
           </p>
         </div>
       </div>
 
-      {/* Alert Utama jika ada kondisi kritis */}
+      {/* Alert Utama berupa bar notifikasi prediktif (Hanya muncul jika ada mesin kritis) */}
       {critcalAlert && (
         <PredictiveAlertBar
           alert={critcalAlert}
@@ -113,7 +110,7 @@ const DashboardPage = () => {
       {/* Grafik Tren (Trend Card) */}
       <TrendCard data={trend} />
 
-      {/* BAR ACTIONS: FILTER STATUS & PENCARIAN MESIN BARU */}
+      {/* BAR ACTIONS: FILTER STATUS & PENCARIAN MESIN */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-stone-900 p-4 rounded-xl border border-gray-200 dark:border-stone-800 shadow-sm">
         <FilterBar statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
         
@@ -130,11 +127,12 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Layout Tabel Aset (Sudah Ter-sorting & Ter-filter) */}
+      {/* Layout Tabel Aset (Murni Berurutan Berdasarkan RUL Terkecil ke Terbesar) */}
       <div className="w-full space-y-4">
         <AssetTable 
           assets={displayAssets} 
           pagination={paginationProps} 
+          userRole={userRole} // Melemparkan properti role ke dalam tabel jika dibutuhkan kontrol aksi
         />
       </div>
     </div>

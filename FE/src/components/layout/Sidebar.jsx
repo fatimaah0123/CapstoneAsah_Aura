@@ -5,8 +5,8 @@ import {
   X,
   Activity,
   MessageSquare,
-  Cpu, // Ikon untuk Manajemen Mesin
-  Users // Ikon untuk Manajemen Engineer
+  UserCircle, // Diselaraskan dengan ikon Manajemen Engineer di Navbar
+  Clock // Diselaraskan dengan ikon Riwayat di Navbar
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -14,26 +14,27 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Mengambil data user untuk mengecek Role
-  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-  const isAdmin = userData.role === 'ADMIN';
+  // REVISI DETEKSI ROLE: Disamakan dengan logic TicketsPage & Navbar (Membaca lowercase/uppercase secara aman)
+  const currentRole = (localStorage.getItem('user_role') || 'engineer').toLowerCase();
+  const isAdmin = currentRole === 'admin';
 
   const isActive = (path) => {
     if (path === '/dashboard' && location.pathname === '/') return true;
-    return location.pathname.startsWith(path);
+    return location.pathname === path; // Menggunakan pengecekan strict agar sama dengan Navbar
   };
 
-  // Menu Dasar untuk semua User
+  // REVISI MENU UTAMA: Menyesuaikan teks judul agar tepat "Tiket" seperti di Navbar
   const menuItems = [
     { title: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-    { title: 'Tiket Maintenance', icon: <Ticket size={20} />, path: '/tickets' },
+    { title: 'Tiket', icon: <Ticket size={20} />, path: '/tickets' },
     { title: 'AI Copilot', icon: <MessageSquare size={20} />, path: '/chatbot' }, 
   ];
 
-  // Menu Tambahan khusus Admin
+  // REVISI MENU ADMIN: Disamakan dengan Navbar, lengkap dengan menu Riwayat dan kesesuaian Ikon
   const adminItems = [
-    { title: 'Manajemen Mesin', icon: <Cpu size={20} />, path: '/admin/machines' },
-    { title: 'Manajemen Engineer', icon: <Users size={20} />, path: '/admin/engineers' },
+    { title: 'Manajemen Mesin', icon: <Activity size={20} />, path: '/admin/machines' },
+    { title: 'Manajemen Engineer', icon: <UserCircle size={20} />, path: '/admin/engineers' },
+    { title: 'Riwayat', icon: <Clock size={20} />, path: '/admin/maintenance' },
   ];
 
   return (
@@ -61,8 +62,8 @@ const Sidebar = ({ isOpen, onClose }) => {
               <span className="text-xl font-black italic tracking-tighter text-white">
                 AVATAR
               </span>
-              <span className="text-[7px] uppercase tracking-[0.2em] font-bold text-blue-200/80">
-                Technical Analysis
+              <span className="text-[8px] uppercase tracking-[0.3em] font-bold text-blue-200/80 mt-1">
+                Technical Analysis & Reliability
               </span>
             </div>
           </div>
@@ -102,10 +103,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {/* Separator & Admin Menu (Hanya muncul jika isAdmin === true) */}
           {isAdmin && (
-            <div className="pt-4 mt-4 border-t border-stone-200 dark:border-stone-800">
-              <p className="px-4 mb-2 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">
-                Administrator Area
-              </p>
+            <div className="">
               {adminItems.map((item) => (
                 <button
                   key={item.path}
