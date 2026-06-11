@@ -1,83 +1,149 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Thermometer, Crosshair, Clock, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { AlertTriangle, Clock, ArrowRight, CheckCircle, Loader, UserCheck } from 'lucide-react';
 
-const AssetTable = ({ assets, pagination }) => {
+// ─── Badge status tiket ───────────────────────────────────────────────────────
+const STATUS_STYLE = {
+  WaitingAssignment: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  Assigned:          'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  InProgress:        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  WaitingApproval:   'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  Done:              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+};
+
+const StatusBadge = ({ status }) => (
+  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLE[status] || 'bg-stone-100 text-stone-600'}`}>
+    {status}
+  </span>
+);
+
+// ─── Format tanggal ───────────────────────────────────────────────────────────
+const formatDate = (iso) => {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  });
+};
+
+// ─── AssetTable ───────────────────────────────────────────────────────────────
+// Props:
+//   title → string judul tabel
+//   data  → array dari API
+//   type  → 'critical' | 'latest'
+//
+// type='critical' → data = critical_machines: [{ id, name, rul_days }]
+// type='latest'   → data = latest_tickets:    [{ id, status, machine_name, type, engineer_name, created_at }]
+
+const AssetTable = ({ title, data = [], type = 'critical' }) => {
   const navigate = useNavigate();
 
-  // Fungsi untuk menangani klik pada baris mesin
-  const handleRowClick = (assetId) => {
-    // Mengarahkan pengguna langsung ke halaman detail tiket/kondisi mesin berdasarkan ID-nya
-    navigate(`/tickets/${assetId}`);
-  };
+  const isEmpty = !data || data.length === 0;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto min-h-[300px]">
+    <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm overflow-hidden">
+
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-stone-100 dark:border-stone-800 flex items-center gap-2">
+        {type === 'critical'
+          ? <AlertTriangle size={16} className="text-red-500" />
+          : <Clock size={16} className="text-blue-500" />
+        }
+        <h3 className="text-sm font-bold text-stone-800 dark:text-stone-200">{title}</h3>
+      </div>
+
+      {/* Tabel */}
+      <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+
+          {/* Header kolom */}
+          <thead className="bg-stone-50 dark:bg-stone-800/50 text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Nama Aset</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Sensor Live</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">RUL (Sisa Waktu)</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Aksi</th>
+              {type === 'critical' ? (
+                <>
+                  <th className="px-5 py-3 text-left">Nama Mesin</th>
+                  <th className="px-5 py-3 text-left">RUL (Hari)</th>
+                  <th className="px-5 py-3 text-center">Detail</th>
+                </>
+              ) : (
+                <>
+                  <th className="px-5 py-3 text-left">Mesin</th>
+                  <th className="px-5 py-3 text-left">Jenis</th>
+                  <th className="px-5 py-3 text-left">Status</th>
+                  <th className="px-5 py-3 text-left">Engineer</th>
+                  <th className="px-5 py-3 text-left">Tanggal</th>
+                  <th className="px-5 py-3 text-center">Detail</th>
+                </>
+              )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {assets.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="px-4 py-8 text-center text-gray-500 text-sm">Tidak ada data aset ditemukan.</td>
-              </tr>
-            ) : (
-              assets.map((asset) => (
-                <tr 
-                  key={asset.id} 
-                  onClick={() => handleRowClick(asset.id)}
-                  className="hover:bg-blue-50/50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group"
-                >
-                  
-                  {/* Nama Mesin */}
-                  <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {asset.name}
-                  </td>
-                  
-                  {/* Status Urgensi */}
-                  <td className="px-4 py-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                      ${asset.status === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 
-                        asset.status === 'WARNING' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 
-                        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
-                      {asset.status}
-                    </span>
-                  </td>
-                  
-                  {/* Parameter Sensor Live dengan Deteksi Ambang Batas */}
-                  <td className="px-4 py-4">
-                    <div className="space-y-1 text-xs text-gray-700 dark:text-gray-300">
-                      <div className={`flex items-center gap-2 ${asset.air_temperature > 45 ? 'text-red-500 font-medium' : ''}`}>
-                        <Thermometer className="w-3 h-3" /> {asset.air_temperature}°C
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Crosshair className="w-3 h-3" /> {asset.rotational_speed} RPM
-                      </div>
-                    </div>
-                  </td>
-                  
-                  {/* Remaining Useful Life (RUL) */}
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className={asset.rul_hours < 100 ? 'text-amber-600 font-semibold' : ''}>
-                        {asset.rul_hours.toFixed(0)} Hours
-                      </span>
-                    </div>
-                  </td>
 
-                  {/* Tombol Aksi Pintas */}
-                  <td className="px-4 py-4 text-center">
-                    <button className="p-1.5 rounded-lg text-gray-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-gray-700 transition-all">
-                      <ArrowRight size={16} />
+          <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
+            {isEmpty ? (
+              <tr>
+                <td
+                  colSpan={type === 'critical' ? 3 : 6}
+                  className="px-5 py-8 text-center text-sm text-stone-400"
+                >
+                  Tidak ada data.
+                </td>
+              </tr>
+            ) : type === 'critical' ? (
+              // ── Baris untuk critical_machines ──
+              data.map((machine) => {
+                const isUrgent = machine.rul_days <= 3;
+                return (
+                  <tr
+                    key={machine.id}
+                    className="hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer group"
+                    onClick={() => navigate(`/tickets?machine=${machine.id}`)}
+                  >
+                    <td className="px-5 py-3.5 text-sm font-medium text-stone-800 dark:text-stone-200 group-hover:text-blue-600 transition-colors">
+                      {machine.name}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className={`text-sm font-bold ${isUrgent ? 'text-red-600' : 'text-amber-600'}`}>
+                        {Number(machine.rul_days).toFixed(1)} hari
+                      </span>
+                      {isUrgent && (
+                        <span className="ml-2 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-semibold">
+                          Kritis!
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-center">
+                      <button className="p-1.5 rounded-lg text-stone-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-stone-700 transition-all">
+                        <ArrowRight size={15} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              // ── Baris untuk latest_tickets ──
+              data.map((ticket) => (
+                <tr
+                  key={ticket.id}
+                  className="hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer group"
+                  onClick={() => navigate(`/tickets/${ticket.id}`)}
+                >
+                  <td className="px-5 py-3.5 text-sm font-medium text-stone-800 dark:text-stone-200 group-hover:text-blue-600 transition-colors">
+                    {ticket.machine_name}
+                  </td>
+                  <td className="px-5 py-3.5 text-xs text-stone-500 dark:text-stone-400 max-w-[120px] truncate">
+                    {ticket.type}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <StatusBadge status={ticket.status} />
+                  </td>
+                  <td className="px-5 py-3.5 text-xs text-stone-500 dark:text-stone-400">
+                    {ticket.engineer_name || <span className="italic">Belum ditugaskan</span>}
+                  </td>
+                  <td className="px-5 py-3.5 text-xs text-stone-500 dark:text-stone-400 whitespace-nowrap">
+                    {formatDate(ticket.created_at)}
+                  </td>
+                  <td className="px-5 py-3.5 text-center">
+                    <button className="p-1.5 rounded-lg text-stone-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-stone-700 transition-all">
+                      <ArrowRight size={15} />
                     </button>
                   </td>
                 </tr>
@@ -86,31 +152,6 @@ const AssetTable = ({ assets, pagination }) => {
           </tbody>
         </table>
       </div>
-
-      {/* Pagination Controls */}
-      {pagination.total > 0 && (
-        <div className="bg-gray-50 dark:bg-gray-900 p-4 border-t border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Menampilkan <span className="font-bold text-gray-900 dark:text-white">{pagination.from}</span> - <span className="font-bold text-gray-900 dark:text-white">{pagination.to}</span> dari <span className="font-bold text-gray-900 dark:text-white">{pagination.total}</span> data
-          </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={(e) => { e.stopPropagation(); pagination.onPrev(); }}
-              disabled={pagination.currentPage === 1}
-              className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              <ChevronLeft size={16} /> Sebelumnya
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); pagination.onNext(); }}
-              disabled={pagination.currentPage === pagination.totalPages}
-              className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              Selanjutnya <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

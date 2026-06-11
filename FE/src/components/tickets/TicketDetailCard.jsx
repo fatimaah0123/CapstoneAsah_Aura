@@ -1,92 +1,201 @@
 import React from 'react';
-import { Calendar, Activity, AlertTriangle, Thermometer, Zap, PenTool } from 'lucide-react';
-import StatCard from './StatCard';
+import {
+  Calendar, AlertTriangle, Cpu, Activity, Clock,
+  UserCheck, Play, CheckCircle, Send, ShieldCheck,
+  Loader2,
+} from 'lucide-react';
+import TicketStatusBadge from './TicketStatusBadge';
+import { useAuth } from '../../context/AuthContext';
 
-const getStatusColor = (s) => {
-  const status = s?.toUpperCase() || 'OPEN';
-  if (status === 'RESOLVED') return 'bg-green-100 text-green-700 border-green-200';
-  if (status === 'IN_PROGRESS') return 'bg-blue-100 text-blue-700 border-blue-200';
-  return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+// ─── Helper ───────────────────────────────────────────────────────────────────
+const formatDate = (iso) => {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('id-ID', {
+    day: '2-digit', month: 'long', year: 'numeric',
+  });
 };
 
-const TicketDetailCard = ({ ticket }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-    
-    {/* Header Ticket */}
-    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-start">
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(ticket.ticket_status || ticket.status)}`}>
-            {ticket.ticket_status || ticket.status}
-          </span>
-          <span className="text-sm text-gray-400">ID: {ticket.ticket_id || ticket.id}</span>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{ticket.name || ticket.assetName}</h1>
-      </div>
-      <div className="text-right text-sm text-gray-500">
-        <div className="flex items-center gap-1 justify-end">
-          <Calendar size={14} />
-          {new Date(ticket.ticket_created_at || ticket.createdAt || Date.now()).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'long', year: 'numeric'
-          })}
-        </div>
-      </div>
-    </div>
-
-    {/* Body Content */}
-    <div className="p-6 space-y-6">
-      
-      {/* Informasi Umum */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl">
-          <p className="text-sm text-gray-500 mb-1">Lokasi / Mesin</p>
-          <p className="font-semibold text-gray-800 dark:text-gray-200">{ticket.name || ticket.assetName || '-'}</p>
-        </div>
-        <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl">
-          <p className="text-sm text-gray-500 mb-1">Prioritas</p>
-          <div className="flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-200">
-            <AlertTriangle size={16} className={ticket.priority === 'High' ? 'text-red-500' : 'text-yellow-500'} />
-            {ticket.priority || 'Medium'}
-          </div>
-        </div>
-      </div>
-
-      {/* Deskripsi / Analisis AI */}
-      <div>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-          <Activity size={20} className="text-blue-500" />
-          Analisis & Deskripsi
-        </h3>
-        <div className="p-4 border border-blue-100 bg-blue-50 dark:bg-blue-900/10 dark:border-blue-800 rounded-xl text-gray-700 dark:text-gray-300 leading-relaxed">
-          {ticket.description || (
-            <p>
-              <strong>Rekomendasi Tindakan:</strong> {ticket.action || "Lakukan inspeksi mendalam pada komponen mesin."}
-              <br/><br/>
-              {ticket.confidence && (
-                <span className="text-sm text-gray-500">
-                  *Tingkat Kepercayaan AI: {(ticket.confidence * 100).toFixed(1)}%
-                </span>
-              )}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Statistik Sensor (Khusus Tiket dari API/ML) */}
-      {ticket.heat_dissipation_failure !== undefined && (
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Statistik Kegagalan (ML)</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard icon={<Thermometer/>} label="Panas Berlebih" value={ticket.heat_dissipation_failure} />
-            <StatCard icon={<Zap/>} label="Daya" value={ticket.power_failure} />
-            <StatCard icon={<PenTool/>} label="Keausan Alat" value={ticket.tool_wear_failure} />
-            <StatCard icon={<Activity/>} label="Overstrain" value={ticket.overstrain_failure} />
-          </div>
-        </div>
-      )}
-      
-    </div>
+const InfoRow = ({ label, value, className = '' }) => (
+  <div className="p-4 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+    <p className="text-xs text-stone-400 font-medium mb-1">{label}</p>
+    <p className={`text-sm font-semibold text-stone-800 dark:text-stone-200 ${className}`}>{value || '—'}</p>
   </div>
 );
+
+const PriorityBadge = ({ priority }) => {
+  const config = {
+    High:   'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    Medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+    Low:    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  };
+  return (
+    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${config[priority] || config.Medium}`}>
+      {priority || 'Medium'}
+    </span>
+  );
+};
+
+// ─── TicketDetailCard ─────────────────────────────────────────────────────────
+// Props:
+//   ticket         → TicketDetailData dari API
+//   actionLoading  → boolean
+//   onAssignClick  → fn() buka AssignModal (Admin, status WaitingAssignment)
+//   onStart        → fn() mulai kerja (Engineer, status Assigned)
+//   onSubmitClick  → fn() buka SubmitReportModal (Engineer, status InProgress)
+//   onApprove      → fn() approve (Admin, status WaitingApproval)
+
+const TicketDetailCard = ({
+  ticket,
+  actionLoading,
+  onAssignClick,
+  onStart,
+  onSubmitClick,
+  onApprove,
+}) => {
+  const { isAdmin, user } = useAuth();
+  const status = ticket.status;
+
+  // Engineer hanya boleh aksi pada tiket yang ditugaskan ke dirinya
+  const isMyTicket = !isAdmin && ticket.assigned_engineer_id === user?.id;
+
+  return (
+    <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm overflow-hidden">
+
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="p-6 border-b border-stone-100 dark:border-stone-800">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <TicketStatusBadge status={status} />
+              <PriorityBadge priority={ticket.priority} />
+              <span className="text-xs text-stone-400 font-mono">#{ticket.id}</span>
+            </div>
+            <h1 className="text-xl font-black text-stone-900 dark:text-white tracking-tight">
+              {ticket.machine_name}
+            </h1>
+            <p className="text-sm text-stone-500 mt-1">{ticket.type}</p>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-stone-400">
+            <Calendar size={13} />
+            {formatDate(ticket.created_at)}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Body ───────────────────────────────────────────────────────── */}
+      <div className="p-6 space-y-5">
+
+        {/* Grid info */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <InfoRow label="RUL (Jam)"  value={ticket.rul_hours != null ? `${ticket.rul_hours} jam` : '—'} />
+          <InfoRow label="RUL (Hari)" value={ticket.rul_days  != null ? `${ticket.rul_days} hari` : '—'} />
+          <InfoRow label="Kondisi"    value={ticket.maintenance_status} />
+          <InfoRow label="Confidence" value={ticket.confidence != null ? `${(ticket.confidence * 100).toFixed(1)}%` : '—'} />
+          <InfoRow
+            label="Engineer"
+            value={ticket.engineer_name || 'Belum ditugaskan'}
+            className={!ticket.engineer_name ? 'text-stone-400 italic' : ''}
+          />
+          <InfoRow label="Dibuat" value={formatDate(ticket.created_at)} />
+        </div>
+
+        {/* Rekomendasi AI */}
+        {ticket.action && (
+          <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40">
+            <div className="flex items-center gap-2 mb-2">
+              <Activity size={14} className="text-blue-500" />
+              <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Rekomendasi AI</span>
+            </div>
+            <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed">{ticket.action}</p>
+          </div>
+        )}
+
+        {/* Laporan (jika sudah WaitingApproval / Done) */}
+        {(status === 'WaitingApproval' || status === 'Done') && ticket.description && (
+          <div className="p-4 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 space-y-3">
+            <p className="text-xs font-bold text-stone-500 uppercase tracking-widest">Laporan Engineer</p>
+            <div className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
+              <p><span className="font-semibold">Deskripsi:</span> {ticket.description}</p>
+              <p><span className="font-semibold">Tindakan:</span> {ticket.action_taken}</p>
+              {ticket.notes && <p><span className="font-semibold">Catatan:</span> {ticket.notes}</p>}
+              {ticket.duration_hours && (
+                <p><span className="font-semibold">Durasi:</span> {ticket.duration_hours} jam</p>
+              )}
+            </div>
+            {ticket.image_url && (
+              <img
+                src={ticket.image_url}
+                alt="Bukti pekerjaan"
+                className="w-full rounded-xl object-cover max-h-64 border border-stone-200 dark:border-stone-700 mt-2"
+              />
+            )}
+          </div>
+        )}
+
+      </div>
+
+      {/* ── Tombol Aksi ────────────────────────────────────────────────── */}
+      {/* Tombol muncul berdasarkan kombinasi status + role */}
+      <div className="px-6 pb-6">
+
+        {/* Admin: Assign (WaitingAssignment) */}
+        {isAdmin && status === 'WaitingAssignment' && (
+          <button
+            onClick={onAssignClick}
+            disabled={actionLoading}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-60"
+          >
+            {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <UserCheck size={16} />}
+            Tugaskan Engineer
+          </button>
+        )}
+
+        {/* Engineer: Mulai (Assigned + tiket milikku) */}
+        {!isAdmin && isMyTicket && status === 'Assigned' && (
+          <button
+            onClick={onStart}
+            disabled={actionLoading}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-60"
+          >
+            {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+            Mulai Pengerjaan
+          </button>
+        )}
+
+        {/* Engineer: Submit laporan (InProgress + tiket milikku) */}
+        {!isAdmin && isMyTicket && status === 'InProgress' && (
+          <button
+            onClick={onSubmitClick}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm transition-all"
+          >
+            <Send size={16} />
+            Submit Laporan Perbaikan
+          </button>
+        )}
+
+        {/* Admin: Approve (WaitingApproval) */}
+        {isAdmin && status === 'WaitingApproval' && (
+          <button
+            onClick={onApprove}
+            disabled={actionLoading}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-60"
+          >
+            {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+            Setujui & Selesaikan Tiket
+          </button>
+        )}
+
+        {/* Done */}
+        {status === 'Done' && (
+          <div className="flex items-center justify-center gap-2 py-3 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 font-bold text-sm border border-green-100 dark:border-green-800/40">
+            <ShieldCheck size={16} />
+            Tiket Selesai & Disetujui
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
 
 export default TicketDetailCard;

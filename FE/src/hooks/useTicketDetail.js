@@ -1,33 +1,80 @@
-import { useState, useEffect } from 'react';
-import { fetchTicketDetail } from '../services/ticketService';
+import { useState, useEffect, useCallback } from 'react';
+import { ticketService } from '../services/ticketService';
 
-const useTicketDetail = (id) => {
-  const [ticket, setTicket] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export const useTicketDetail = (ticketId) => {
+  const [ticket, setTicket]             = useState(null);
+  const [isLoading, setIsLoading]       = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError]               = useState('');
+
+  // ── Fetch detail tiket ─────────────────────────────────────────────────────
+  const fetchDetail = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const data = await ticketService.getTicketById(ticketId);
+      setTicket(data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal memuat detail tiket.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [ticketId]);
 
   useEffect(() => {
-    const loadDetail = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchTicketDetail(id);
-        if (data) {
-          setTicket(data);
-        } else {
-          setError('Tiket tidak ditemukan.');
-        }
-      } catch (err) {
-        console.error(err);
-        setError('Gagal mengambil detail tiket.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (ticketId) fetchDetail();
+  }, [fetchDetail, ticketId]);
 
-    loadDetail();
-  }, [id]);
+  // ── Assign engineer — Admin ────────────────────────────────────────────────
+  const handleAssign = async (engineerId) => {
+    setActionLoading(true);
+    setError('');
+    try {
+      const updated = await ticketService.assignEngineer(ticketId, engineerId);
+      setTicket(updated);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal menugaskan engineer.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-  return { ticket, loading, error };
+  // ── Mulai kerja — Engineer ─────────────────────────────────────────────────
+  const handleStart = async () => {
+    setActionLoading(true);
+    setError('');
+    try {
+      const updated = await ticketService.startWork(ticketId);
+      setTicket(updated);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal memulai pekerjaan.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // ── Approve — Admin ────────────────────────────────────────────────────────
+  const handleApprove = async () => {
+    setActionLoading(true);
+    setError('');
+    try {
+      const updated = await ticketService.approveTicket(ticketId);
+      setTicket(updated);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal menyetujui tiket.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  return {
+    ticket,
+    isLoading,
+    actionLoading,
+    error,
+    handleAssign,
+    handleStart,
+    handleApprove,
+    refreshDetail: fetchDetail,
+  };
 };
-
-export default useTicketDetail;

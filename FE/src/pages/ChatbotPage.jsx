@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, Bot, Sparkles, Trash2 } from 'lucide-react';
-import { chatBot } from '../services/api.js';
+// BENAR (Mengambil objek chatbotService dari file layanan yang baru)
+import { chatbotService } from '../services/chatbotService';
 
 const ChatbotPage = () => {
   const [input, setInput] = useState('');
@@ -16,24 +17,22 @@ const ChatbotPage = () => {
     }
   }, [chatHistory]);
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+const handleSend = async (e) => {
+  e.preventDefault();
+  if (!inputText.trim()) return;
 
-    const userMsg = input;
-    setInput('');
-    setChatHistory((prev) => [...prev, { role: 'user', message: userMsg }]);
-    setIsLoading(true);
-
-    try {
-      const data = await chatBot(userMsg);
-      setChatHistory((prev) => [...prev, { role: 'bot', message: data.answer }]);
-    } catch (error) {
-      setChatHistory((prev) => [...prev, { role: 'bot', message: 'Maaf, terjadi gangguan koneksi ke server AI.' }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  try {
+    // Ubah dari chatBot(inputText) menjadi chatbotService.sendMessage(inputText)
+    const response = await chatbotService.sendMessage(inputText);
+    
+    // Sesuaikan cara mengambil teks balasan AI berdasarkan struktur objek data BE Anda
+    const botReply = response.data?.reply || response.reply;
+    
+    // Tambahkan botReply ke dalam state array obrolan UI Anda...
+  } catch (err) {
+    console.error('Gagal mengirim pesan ke chatbot:', err);
+  }
+};
 
   const clearChat = () => {
     if (window.confirm('Hapus semua riwayat percakapan?')) {

@@ -1,49 +1,41 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../services/authServices';
+import { useAuth } from '../context/AuthContext';
 
-// Fungsi validasi password: Min 8 karakter, 1 Huruf Besar, 1 Angka
-export const validatePassword = (pass) => {
-  const regex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
-  return regex.test(pass);
-};
+export const useLogin = () => {
+  const { login } = useAuth();
+  const navigate  = useNavigate();
 
-const useLogin = (onLoginSuccess) => {
-  const navigate = useNavigate();
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({ userId: '', password: '' });
+  const [error, setError]       = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     setError('');
 
-    if (!validatePassword(formData.password)) {
-      setError('Akses ditolak: Password tidak memenuhi standar keamanan.');
-      return;
-    }
-
-    setLoading(true);
     try {
-      await login(formData);
-
-      if (onLoginSuccess) onLoginSuccess();
-      navigate('/dashboard');
+      await login(email, password); // panggil AuthContext → authService.login
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err.message || 'ID atau Password salah.');
+      setError(
+        err.response?.data?.message ||
+        'Login gagal. Silakan periksa kembali email dan password Anda.'
+      );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return {
+    email, setEmail,
+    password, setPassword,
     showPassword, setShowPassword,
-    loading,
     error,
-    formData, setFormData,
+    isLoading,
     handleLogin,
   };
 };
-
-export default useLogin;

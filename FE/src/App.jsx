@@ -2,128 +2,85 @@ import React, { useState } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import useDarkMode from './hooks/useDarkMode';
 
-// Layout Components
-import Navbar from './components/layout/Navbar';
+// Guard
+import ProtectedRoute from './components/common/ProtectedRoute';
+
+// Layout
+import Navbar  from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
-import Footer from './components/layout/Footer';
+import Footer  from './components/layout/Footer';
 
 // Pages
-import DashboardPage from './pages/DashboardPage';
-import TicketsPage from './pages/TicketsPage';
-import TicketDetailPage from './pages/TicketDetailPage';
-import ChatbotPage from './pages/ChatbotPage';
-import ReportPage from './pages/ReportPage'; 
-import MachineManagement from './pages/MachineManagement';
-import MaintenanceHistory from './pages/MaintenanceHistory';
+import LoginPage          from './pages/LoginPage';
+import DashboardPage      from './pages/DashboardPage';
+import MachineManagement  from './pages/MachineManagement';
 import EngineerManagement from './pages/EngineerManagement';
-import LoginPage from './pages/LoginPage'; // Pastikan import ini sesuai dengan lokasi file Anda
-import RegisterPage from './pages/RegisterPage'; // Jika ada halaman registrasi
+import TicketsPage        from './pages/TicketsPage';
+import TicketDetailPage   from './pages/TicketDetailPage';
+import MaintenanceHistory from './pages/MaintenanceHistory';
+import ReportPage         from './pages/ReportPage';
+import ChatbotPage        from './pages/ChatbotPage';
 
-// 1. Komponen Pelindung Rute (Protected & Role-Based)
-const ProtectedRoute = ({ allowedRoles }) => {
-  // const token = localStorage.getItem('auth_token');
-  // const userRole = localStorage.getItem('user_role'); 
+// ─── Layout untuk semua halaman terproteksi ───────────────────────────────────
+// Navbar & Sidebar menerima isDark, toggleDark, dan onMenuClick dari sini
+// agar state dark-mode tidak tersebar ke mana-mana.
+const AppLayout = ({ isDark, toggleDark, isSidebarOpen, setIsSidebarOpen }) => (
+  <div className={`min-h-screen flex flex-col bg-stone-50 dark:bg-stone-950 transition-colors duration-300 ${isDark ? 'dark' : ''}`}>
+    <Navbar
+      isDark={isDark}
+      toggleDark={toggleDark}
+      onMenuClick={() => setIsSidebarOpen(true)}
+    />
+    <Sidebar
+      isOpen={isSidebarOpen}
+      onClose={() => setIsSidebarOpen(false)}
+    />
+    <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 py-6">
+      <Outlet />
+    </main>
+    <Footer />
+  </div>
+);
 
-  // --- KODE MOCKING SEMENTARA AGAR BISA LANGSUNG MASUK DASHBOARD ---
-  const token = "mock-token-bara-12345"; 
-  const userRole = "admin";
-
-  if (!token) {
-    // Jika tidak ada token, paksa user ke halaman login
-    return <Navigate to="/login" replace />;
-  }
-
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
-    // Jika role tidak sesuai, kembalikan ke dashboard utama
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // Jika lolos verifikasi, render komponen anak
-  return <Outlet />;
-};
-
-// 2. Komponen Khusus Layout Dashboard internal
-const DashboardLayout = ({ isDark, toggleDark, isSidebarOpen, setIsSidebarOpen }) => {
-  return (
-    <div className="bg-gray-50 dark:bg-stone-950 flex flex-col min-h-screen">
-      {/* Navbar & Sidebar hanya merender di dalam layout internal dashboard */}
-      <Navbar 
-        isDark={isDark} 
-        toggleDark={toggleDark} 
-        onMenuClick={() => setIsSidebarOpen(true)} 
-      />
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-      />
-      
-      {/* Konten Utama Halaman Internal */}
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6">
-        <Outlet /> {/* Di sinilah isi halaman dashboard/tiket/mesin akan muncul */}
-      </main>
-
-      <Footer />
-    </div>
-  );
-};
-
-const App = () => {
-  const [isDark, toggleDark] = useDarkMode();
+// ─── App ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [isDark, toggleDark]              = useDarkMode();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const layoutProps = { isDark, toggleDark, isSidebarOpen, setIsSidebarOpen };
+
   return (
-    <div className={`min-h-screen transition-colors ${isDark ? 'dark' : ''}`}>
-      <Routes>
-        {/* ================= HALAMAN PUBLIK (TANPA NAVBAR/SIDEBAR) ================= */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+    <Routes>
 
-        {/* ================= HALAMAN TERPROTEKSI (ROLE: ADMIN & ENGINEER) ================= */}
-        <Route element={<ProtectedRoute allowedRoles={['admin', 'engineer']} />}>
-          {/* Membungkus halaman dengan struktur Layout Dashboard */}
-          <Route element={
-            <DashboardLayout 
-              isDark={isDark} 
-              toggleDark={toggleDark} 
-              isSidebarOpen={isSidebarOpen} 
-              setIsSidebarOpen={setIsSidebarOpen} 
-            />
-          }>
-            {/* Redirect root awal (/) ke dashboard */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            
-            {/* Tiket & Pelaporan */}
-            <Route path="/tickets" element={<TicketsPage />} />
-            <Route path="/tickets/:id" element={<TicketDetailPage />} />
-            <Route path="/report/:id" element={<ReportPage />} />
+      {/* ── Publik ─────────────────────────────────────────────────────── */}
+      <Route path="/login" element={<LoginPage />} />
 
-            {/* Fitur Lainnya */}
-            <Route path="/chatbot" element={<ChatbotPage />} />
-          </Route>
+      {/* ── Admin + Engineer ───────────────────────────────────────────── */}
+      <Route element={<ProtectedRoute allowedRoles={['Admin', 'Engineer']} />}>
+        <Route element={<AppLayout {...layoutProps} />}>
+          <Route path="/dashboard"   element={<DashboardPage />} />
+          <Route path="/tickets"     element={<TicketsPage />} />
+          <Route path="/tickets/:id" element={<TicketDetailPage />} />
+          <Route path="/report/:id"  element={<ReportPage />} />
+          <Route path="/chatbot"     element={<ChatbotPage />} />
         </Route>
+      </Route>
 
-        {/* ================= HALAMAN KHUSUS ADMIN SAJA ================= */}
-        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-          <Route element={
-            <DashboardLayout 
-              isDark={isDark} 
-              toggleDark={toggleDark} 
-              isSidebarOpen={isSidebarOpen} 
-              setIsSidebarOpen={setIsSidebarOpen} 
-            />
-          }>
-            <Route path="/admin/machines" element={<MachineManagement />} />
-            <Route path="/admin/engineers" element={<EngineerManagement />} />
-            <Route path="/admin/maintenance" element={<MaintenanceHistory />} />
-          </Route>
+      {/* ── Admin saja ─────────────────────────────────────────────────── */}
+      <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+        <Route element={<AppLayout {...layoutProps} />}>
+          <Route path="/machines"  element={<MachineManagement />} />
+          <Route path="/engineers" element={<EngineerManagement />} />
+          <Route path="/history"   element={<MaintenanceHistory />} />
         </Route>
+      </Route>
 
-        {/* Catch-all: Jika rute tidak dikenali dan user belum login, ProtectedRoute otomatis menendang ke /login */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </div>
+      {/* ── Fallback ───────────────────────────────────────────────────── */}
+      <Route path="/"  element={<Navigate to="/dashboard" replace />} />
+      <Route path="*"  element={<Navigate to="/dashboard" replace />} />
+
+    </Routes>
   );
-};
+}
 
 export default App;

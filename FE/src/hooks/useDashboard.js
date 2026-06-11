@@ -1,32 +1,29 @@
 import { useState, useEffect } from 'react';
-import { fetchSummary, fetchTrend, fetchStat } from '../services/DashboardService';
+import { dashboardService } from '../services/DashboardService';
 
 const useDashboard = () => {
-  const [summary, setSummary] = useState([]);
-  const [trend, setTrend] = useState([]);
-  const [stat, setStat] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading]         = useState(true);
+  const [error, setError]                 = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
+      setError('');
       try {
-        const summaryData = await fetchSummary();
-        setSummary(summaryData);
-
-        const trendData = await fetchTrend();
-        // Debug: Cek di console browser apakah trendData adalah Array
-        console.log("Trend Data API:", trendData);
-        setTrend(trendData);
-
-        const statData = await fetchStat();
-        setStat(statData);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        const data = await dashboardService.getDashboardData();
+        setDashboardData(data);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Gagal memuat data dashboard.');
+      } finally {
+        setIsLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
-  return { summary, trend, stat };
+  return { dashboardData, isLoading, error };
 };
 
 export default useDashboard;

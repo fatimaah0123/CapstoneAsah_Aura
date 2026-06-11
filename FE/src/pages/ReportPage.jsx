@@ -6,7 +6,7 @@ import { Send, X, Package, Settings, CheckCircle2, XCircle } from 'lucide-react'
 import ReportPhoto from '../components/report/ReportPhoto';
 
 // Hooks
-import useReport from '../hooks/useReport';
+import {useReport} from '../hooks/useReport';
 import useCamera from '../hooks/useCamera';
 
 const ReportPage = () => {

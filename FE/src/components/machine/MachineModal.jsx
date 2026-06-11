@@ -1,126 +1,145 @@
 import React from 'react';
-import { X, Cpu, Save, PlusCircle, MinusCircle } from 'lucide-react';
+import { X, Cpu, Save, Loader2 } from 'lucide-react';
+
+const InputField = ({ label, name, value, onChange, type = 'text', placeholder, required = true }) => (
+  <div>
+    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+      {label}
+    </label>
+    <input
+      type={type}
+      name={name}
+      required={required}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-800
+                 dark:bg-stone-800 dark:text-white font-medium text-sm
+                 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
+    />
+  </div>
+);
 
 const MachineModal = ({
   isModalOpen,
-  setIsModalOpen,
+  editTarget,       // null = mode tambah, object = mode edit
   formData,
+  formError,
+  isSubmitting,
+  closeModal,
   handleChange,
   handleSubmit,
-  addSparePartRow,
-  removeSparePartRow,
-  handleSparePartChange,
 }) => {
   if (!isModalOpen) return null;
 
+  const isEdit = !!editTarget;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md">
-      <div className="bg-white dark:bg-stone-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-stone-200 dark:border-stone-800">
-        
-        <div className="p-6 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-white dark:bg-stone-900">
+      <div className="bg-white dark:bg-stone-900 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden border border-stone-200 dark:border-stone-800">
+
+        {/* Header */}
+        <div className="p-6 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
               <Cpu size={20} />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Tambah Mesin Baru</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+              {isEdit ? 'Edit Data Mesin' : 'Tambah Mesin Baru'}
+            </h3>
           </div>
-          <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={24} />
+          <button
+            onClick={closeModal}
+            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+          >
+            <X size={22} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">ID Mesin</label>
-              <input 
-                name="id" required placeholder="Contoh: MC-V01"
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-800 dark:bg-stone-800 font-semibold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
-                value={formData.id} onChange={handleChange}
-              />
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+
+          {/* Error dari API */}
+          {formError && (
+            <div className="px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
+              {formError}
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tipe Unit</label>
-              <select 
-                name="type"
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-800 dark:bg-stone-800 font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white appearance-none"
-                value={formData.type} onChange={handleChange}
-              >
-                <option value="Production">PRODUCTION</option>
-                <option value="Utility">UTILITY</option>
-                <option value="Packaging">PACKAGING</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nama Nama Unit</label>
-              <input 
-                name="name" required placeholder="Masukkan nama resmi mesin..."
-                className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-800 dark:bg-stone-800 font-semibold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
-                value={formData.name} onChange={handleChange}
-              />
-            </div>
+          )}
+
+          {/* Baris 1: Kode + Nama */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              label="Kode Mesin"
+              name="code"
+              value={formData.code}
+              onChange={handleChange}
+              placeholder="MCH-001"
+            />
+            <InputField
+              label="Tipe Mesin"
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              placeholder="Lathe / Milling / dll"
+            />
           </div>
 
-          {/* SECTION SUKU CADANG DINAMIS */}
-          <div className="space-y-4 border-t border-stone-100 dark:border-stone-800 pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Daftar Suku Cadang (Inventory)</label>
-              <button 
-                type="button" 
-                onClick={addSparePartRow}
-                className="text-xs flex items-center gap-1.5 text-blue-600 font-bold hover:underline"
-              >
-                <PlusCircle size={14} /> 
-              </button>
-            </div>
+          {/* Nama */}
+          <InputField
+            label="Nama Mesin"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Mesin Bubut A1"
+          />
 
-            {formData.spareParts.map((part, index) => (
-              <div key={index} className="flex gap-3 animate-in slide-in-from-left-2">
-                <div className="flex-1">
-                  <input 
-                    placeholder="Nama suku cadang..."
-                    className="w-full px-4 py-2.5 rounded-lg border border-stone-200 dark:border-stone-800 dark:bg-stone-800 text-sm font-medium focus:border-blue-500 outline-none transition-all dark:text-white"
-                    value={part.partName}
-                    onChange={(e) => handleSparePartChange(index, 'partName', e.target.value)}
-                  />
-                </div>
-                <div className="w-24">
-                  <input 
-                    type="number"
-                    placeholder="Qty"
-                    className="w-full px-4 py-2.5 rounded-lg border border-stone-200 dark:border-stone-800 dark:bg-stone-800 text-sm font-bold text-center focus:border-blue-500 outline-none transition-all dark:text-white"
-                    value={part.quantity}
-                    onChange={(e) => handleSparePartChange(index, 'quantity', parseInt(e.target.value))}
-                  />
-                </div>
-                {formData.spareParts.length > 1 && (
-                  <button 
-                    type="button" 
-                    onClick={() => removeSparePartRow(index)}
-                    className="p-2.5 text-stone-300 hover:text-red-500 transition-colors"
-                  >
-                    <MinusCircle size={20} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+          {/* Lokasi */}
+          <InputField
+            label="Lokasi"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            placeholder="Lantai 1 - Area A"
+          />
 
-          <div className="mt-10 flex gap-4">
-            <button 
-              type="button" 
-              onClick={() => setIsModalOpen(false)} 
-              className="flex-1 px-6 py-3 border border-stone-200 dark:border-stone-800 rounded-xl font-bold text-gray-500 hover:bg-stone-50 transition-all"
+          {/* Tanggal Instalasi */}
+          <InputField
+            label="Tanggal Instalasi"
+            name="install_date"
+            type="date"
+            value={formData.install_date}
+            onChange={handleChange}
+            placeholder=""
+          />
+
+          {/* Tombol aksi */}
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="flex-1 px-6 py-3 border border-stone-200 dark:border-stone-700 rounded-xl font-bold text-gray-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 transition-all"
             >
               Batal
             </button>
-            <button 
-              type="submit" 
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg flex items-center justify-center gap-2"
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Save size={18} /> 
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  <span>{isEdit ? 'Simpan Perubahan' : 'Tambah Mesin'}</span>
+                </>
+              )}
             </button>
           </div>
+
         </form>
       </div>
     </div>

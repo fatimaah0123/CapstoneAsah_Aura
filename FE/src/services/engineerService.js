@@ -1,29 +1,30 @@
-// engineerService.js
-// Saat ini data engineer masih menggunakan local state.
-// File ini disiapkan sebagai layer service agar mudah diganti
-// dengan pemanggilan API backend ketika sudah tersedia.
+import api from './api';
+export const userService = {
 
-// Contoh struktur yang siap diisi:
-// import { getEngineers, createEngineer, deleteEngineer } from './api';
+  // ── GET /api/users?search= ────────────────────────────────────────────────
+  getAll: async (search = '') => {
+    const params = search ? { search } : {};
+    const res = await api.get('/api/users', { params });
+    return res.data.data.users;
+  },
 
-export const fetchAllEngineers = async () => {
-  // TODO: Ganti dengan pemanggilan API saat backend siap
-  // const response = await getEngineers();
-  // return response.data || [];
-  return [
-    { id: 'ENG-001', name: 'Siti Fatimah', email: 'siti@avatar.com', role: 'Senior Engineer', status: 'Active' },
-    { id: 'ENG-002', name: 'Budi Santoso', email: 'budi@avatar.com', role: 'Junior Engineer', status: 'On Duty' },
-  ];
-};
+  // ── POST /api/users ───────────────────────────────────────────────────────
+  // Required: employee_id, name, email, password, role ('Admin' | 'Engineer')
+  create: async (payload) => {
+    const res = await api.post('/api/users', payload);
+    return res.data.data.user;
+  },
 
-export const addEngineer = async (engineerData) => {
-  // TODO: Ganti dengan pemanggilan API saat backend siap
-  // return await createEngineer(engineerData);
-  return engineerData;
-};
+  // ── PUT /api/users/{id} ───────────────────────────────────────────────────
+  // Fields yang bisa diubah: name, password, role
+  // email & employee_id tidak bisa diubah
+  update: async (id, payload) => {
+    const res = await api.put(`/api/users/${id}`, payload);
+    return res.data.data.user;
+  },
 
-export const removeEngineer = async (id) => {
-  // TODO: Ganti dengan pemanggilan API saat backend siap
-  // return await deleteEngineer(id);
-  return id;
+  // ── DELETE /api/users/{id} ────────────────────────────────────────────────
+  remove: async (id) => {
+    await api.delete(`/api/users/${id}`);
+  },
 };

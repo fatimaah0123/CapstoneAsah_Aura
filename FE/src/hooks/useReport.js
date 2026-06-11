@@ -1,67 +1,87 @@
 import { useState, useEffect } from 'react';
-import { fetchTicketForReport, submitReport } from '../services/ticketService';
+import { useNavigate } from 'react-router-dom';
+// 1. Perbaikan import: ambil objek ticketService yang baru
+import { ticketService } from '../services/ticketService';
 
-const useReport = (id, isViewOnly, navigate) => {
+export const useReport = (ticketId) => {
   const [ticket, setTicket] = useState(null);
-  const [technicianName, setTechnicianName] = useState('');
-  const [damageDesc, setDamageDesc] = useState('');
-  const [spareParts, setSpareParts] = useState('');
-  const [evidenceImage, setEvidenceImage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [description, setDescription] = useState('');
+  const [actionTaken, setActionTaken] = useState('');
+  const [notes, setNotes] = useState('');
+  const [durationHours, setDurationHours] = useState('');
+  const [imageFile, setImageFile] = useState(null); // Menyimpan file gambar binary
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const fetchTicketDetail = async () => {
-    try {
-      const data = await fetchTicketForReport(id);
-      if (data) {
-        setTicket(data);
-        setTechnicianName(data.technician_name || '');
-        // Jika mode view, isi semua field dari data riwayat yang sudah tersimpan
-        if (isViewOnly) {
-          setDamageDesc(data.report_description || '');
-          setSpareParts(data.spare_parts || '');
-          setEvidenceImage(data.evidence_image || null);
-        }
-      }
-    } catch (error) {
-      console.error("Gagal mengambil rincian tiket:", error);
-    }
-  };
-
+  // 2. Ambil detail tiket untuk ditampilkan sebagai informasi di halaman report
   useEffect(() => {
-    fetchTicketDetail();
-  }, [id]);
+    const fetchTicketData = async () => {
+      try {
+        setIsFetching(true);
+        // Mengganti fungsi lama dengan ticketService.getTicketById
+        const response = await ticketService.getTicketById(ticketId);
+        if (response.status === 'success') {
+          setTicket(response.data.ticket);
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || 'Gagal memuat data detail tiket.');
+      } finally {
+        setIsFetching(false);
+      }
+    };
 
-  const handleSubmit = async (e, image) => {
+    if (ticketId) fetchTicketData();
+  }, [ticketId]);
+
+  // 3. Logika Submit Laporan Perbaikan (PATCH /api/ticket-maintenance/{id}/submit)
+  const handleSubmitReport = async (e) => {
     e.preventDefault();
-    if (isViewOnly) return; // Guard: mode view tidak bisa submit
-    if (!image) return alert("Wajib melampirkan foto bukti!");
-    setLoading(true);
+    if (!imageFile) {
+      setError('Foto bukti pekerjaan wajib diunggah.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
     try {
-      await submitReport(id, {
-        status: 'RESOLVED',
-        technician_name: technicianName,
-        report_description: damageDesc,
-        spare_parts: spareParts,
-        evidence_image: image
-      });
-      alert("Laporan Berhasil Dikirim!");
-      navigate('/tickets');
-    } catch (error) {
-      alert("Gagal mengirim laporan.");
+      // Sesuai swagger.json, request harus berbentuk multipart/form-data karena ada file gambar
+      const formData = new FormData();
+      formData.append('description', description);
+      formData.append('action_taken', actionTaken);
+      formData.append('notes', notes);
+      formData.append('duration_hours', parseFloat(durationHours));
+      formData.append('image', imageFile); // Key 'image' sesuai skema binary swagger BE
+
+      const response = await ticketService.submitTicketReport(ticketId, formData);
+      
+      if (response.status === 'success') {
+        // Jika sukses, arahkan kembali ke detail tiket atau halaman list tiket
+        navigate(`/tickets/${ticketId}`);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal mengirimkan laporan perbaikan.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return {
     ticket,
-    technicianName, setTechnicianName,
-    damageDesc, setDamageDesc,
-    spareParts, setSpareParts,
-    evidenceImage, // image dari riwayat untuk mode view
-    loading,
-    handleSubmit,
+    description,
+    setDescription,
+    actionTaken,
+    setActionTaken,
+    notes,
+    setNotes,
+    durationHours,
+    setDurationHours,
+    setImageFile,
+    isLoading,
+    isFetching,
+    error,
+    handleSubmitReport,
   };
 };
-
-export default useReport;

@@ -1,29 +1,28 @@
-// machineService.js
-// Saat ini data mesin masih menggunakan local state di useMachine.js.
-// File ini disiapkan sebagai layer service agar mudah diganti
-// dengan pemanggilan API backend ketika sudah tersedia.
+import api from './api';
+export const machineService = {
 
-// Contoh struktur yang siap diisi:
-// import { getMachines, createMachine, deleteMachine } from './api';
+  // ── GET /api/machines?search= ─────────────────────────────────────────────
+  getAll: async (search = '') => {
+    const params = search ? { search } : {};
+    const res = await api.get('/api/machines', { params });
+    return res.data.data.machines; // kembalikan array langsung
+  },
 
-export const fetchAllMachines = async () => {
-  // TODO: Ganti dengan pemanggilan API saat backend siap
-  // const response = await getMachines();
-  // return response.data || [];
-  return [
-    { id: 'MC-001', name: 'CNC Milling Machine A1', type: 'Production', status: 'Active' },
-    { id: 'MC-002', name: 'Lathe Machine B2', type: 'Production', status: 'Maintenance' },
-  ];
-};
+  // ── POST /api/machines ────────────────────────────────────────────────────
+  // Required fields: name, code, type, location, install_date
+  create: async (payload) => {
+    const res = await api.post('/api/machines', payload);
+    return res.data.data.machine;
+  },
 
-export const addMachine = async (machineData) => {
-  // TODO: Ganti dengan pemanggilan API saat backend siap
-  // return await createMachine(machineData);
-  return machineData;
-};
+  // ── PUT /api/machines/{id} ────────────────────────────────────────────────
+  update: async (id, payload) => {
+    const res = await api.put(`/api/machines/${id}`, payload);
+    return res.data.data.machine;
+  },
 
-export const removeMachine = async (id) => {
-  // TODO: Ganti dengan pemanggilan API saat backend siap
-  // return await deleteMachine(id);
-  return id;
+  // ── DELETE /api/machines/{id} ─────────────────────────────────────────────
+  remove: async (id) => {
+    await api.delete(`/api/machines/${id}`);
+  },
 };
