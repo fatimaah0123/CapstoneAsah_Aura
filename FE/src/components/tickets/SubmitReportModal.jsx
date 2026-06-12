@@ -1,53 +1,57 @@
-import React, { useState, useRef } from 'react';
-import { X, Send, Camera, Upload, Loader2, ImageIcon, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Send, Camera, Upload, Loader2, Trash2, StopCircle } from 'lucide-react';
 import { ticketService } from '../../services/ticketService';
+import useCamera from '../../hooks/useCamera';
 
 const SubmitReportModal = ({ ticket, onSuccess, onClose }) => {
   const [form, setForm] = useState({
-    description:    '',
-    action_taken:   '',
-    notes:          '',
-    duration_hours: '',
+    description: '', action_taken: '', notes: '', duration_hours: '',
   });
-  const [imageFile, setImageFile]     = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError]             = useState('');
-  const fileInputRef                  = useRef(null);
+  const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const {
+    isCameraOpen, devices, selectedDevice, setSelectedDevice,
+    image, setImage, videoRef, canvasRef,
+    startCamera, stopCamera, takePicture, resetImage,
+  } = useCamera();
 
-  const handleFileChange = (e) => {
+  useEffect(() => () => stopCamera(), []);
+
+  const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+
+  const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    const reader = new FileReader();
+    reader.onloadend = () => setImage(reader.result);
+    reader.readAsDataURL(file);
   };
 
-  const resetImage = () => {
-    setImageFile(null);
-    setImagePreview('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  // base64 → File object untuk FormData
+  const base64ToFile = (base64, filename = 'bukti.jpg') => {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8 = new Uint8Array(n);
+    while (n--) u8[n] = bstr.charCodeAt(n);
+    return new File([u8], filename, { type: mime });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!imageFile) { setError('Foto bukti pekerjaan wajib diisi.'); return; }
-
+    if (!image) { setError('Foto bukti pekerjaan wajib diisi.'); return; }
     setIsSubmitting(true);
     setError('');
-
     try {
-      // Gunakan FormData karena ada upload file (multipart/form-data)
       const fd = new FormData();
       fd.append('description',    form.description);
       fd.append('action_taken',   form.action_taken);
       fd.append('duration_hours', form.duration_hours);
-      fd.append('image',          imageFile);
+      fd.append('image',          base64ToFile(image, `bukti-tiket-${ticket.id}.jpg`));
       if (form.notes) fd.append('notes', form.notes);
-
       const updated = await ticketService.submitReport(ticket.id, fd);
       onSuccess(updated);
     } catch (err) {
@@ -57,9 +61,11 @@ const SubmitReportModal = ({ ticket, onSuccess, onClose }) => {
     }
   };
 
+  const inputCls = "w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-800 dark:bg-stone-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all";
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-200 dark:border-stone-800 w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-200 dark:border-stone-800 w-full max-w-lg max-h-[92vh] flex flex-col">
 
         {/* Header */}
         <div className="p-5 border-b border-stone-100 dark:border-stone-800 flex items-center justify-between shrink-0">
@@ -72,143 +78,130 @@ const SubmitReportModal = ({ ticket, onSuccess, onClose }) => {
               <p className="text-xs text-stone-400 truncate max-w-[220px]">{ticket.machine_name}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors">
+          <button onClick={() => { stopCamera(); onClose(); }} className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors">
             <X size={18} />
           </button>
         </div>
 
-        {/* Form scrollable */}
+        {/* Form */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
 
           {error && (
-            <div className="px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
-              {error}
-            </div>
+            <div className="px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">{error}</div>
           )}
 
-          {/* Deskripsi masalah */}
           <div>
-            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">
-              Deskripsi Masalah <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              name="description"
-              required
-              rows={3}
-              value={form.description}
-              onChange={handleChange}
-              placeholder="Jelaskan masalah yang ditemukan..."
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-800 dark:bg-stone-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all resize-none"
-            />
+            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">Deskripsi Masalah <span className="text-red-500">*</span></label>
+            <textarea name="description" required rows={3} value={form.description} onChange={handleChange} placeholder="Jelaskan masalah yang ditemukan..." className={`${inputCls} resize-none`} />
           </div>
 
-          {/* Tindakan yang dilakukan */}
           <div>
-            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">
-              Tindakan yang Dilakukan <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              name="action_taken"
-              required
-              rows={3}
-              value={form.action_taken}
-              onChange={handleChange}
-              placeholder="Jelaskan tindakan perbaikan yang telah dilakukan..."
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-800 dark:bg-stone-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all resize-none"
-            />
+            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">Tindakan yang Dilakukan <span className="text-red-500">*</span></label>
+            <textarea name="action_taken" required rows={3} value={form.action_taken} onChange={handleChange} placeholder="Jelaskan tindakan perbaikan yang telah dilakukan..." className={`${inputCls} resize-none`} />
           </div>
 
-          {/* Lama pengerjaan */}
           <div>
-            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">
-              Durasi Pengerjaan (jam) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              name="duration_hours"
-              required
-              min="0.1"
-              step="0.1"
-              value={form.duration_hours}
-              onChange={handleChange}
-              placeholder="Contoh: 2.5"
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-800 dark:bg-stone-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
-            />
+            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">Durasi Pengerjaan (jam) <span className="text-red-500">*</span></label>
+            <input type="number" name="duration_hours" required min="0.1" step="0.1" value={form.duration_hours} onChange={handleChange} placeholder="Contoh: 2.5" className={inputCls} />
           </div>
 
-          {/* Catatan tambahan */}
           <div>
-            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">
-              Catatan Tambahan <span className="text-stone-300">(opsional)</span>
-            </label>
-            <input
-              type="text"
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              placeholder="Rekomendasi, temuan lain, dll..."
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-800 dark:bg-stone-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
-            />
+            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">Catatan <span className="text-stone-300">(opsional)</span></label>
+            <input type="text" name="notes" value={form.notes} onChange={handleChange} placeholder="Rekomendasi, temuan lain, dll..." className={inputCls} />
           </div>
 
-          {/* Upload foto */}
+          {/* ── Foto Bukti ─────────────────────────────────────────────── */}
           <div>
             <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">
               Foto Bukti Pekerjaan <span className="text-red-500">*</span>
             </label>
-            {imagePreview ? (
-              <div className="relative rounded-xl overflow-hidden border border-stone-200 dark:border-stone-700">
-                <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover" />
-                <button
-                  type="button"
-                  onClick={resetImage}
-                  className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  <Trash2 size={14} />
-                </button>
+
+            {/* Preview foto */}
+            {image ? (
+              <div className="space-y-2">
+                <div className="relative rounded-xl overflow-hidden border border-stone-200 dark:border-stone-700">
+                  <img src={image} alt="Preview bukti" className="w-full h-52 object-cover" />
+                  <button type="button" onClick={() => { resetImage(); stopCamera(); }}
+                    className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors" title="Hapus foto">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                <p className="text-xs text-stone-400 text-center">Foto siap dikirim. Klik ikon hapus untuk mengambil ulang.</p>
               </div>
             ) : (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all"
-              >
-                <ImageIcon size={28} className="mx-auto text-stone-300 mb-2" />
-                <p className="text-sm font-medium text-stone-400">Klik untuk upload foto</p>
-                <p className="text-xs text-stone-300 mt-1">JPG, PNG, WEBP (maks 10MB)</p>
-              </div>
+              <>
+                {/* Viewfinder kamera */}
+                {isCameraOpen && (
+                  <div className="mb-3 space-y-2">
+                    <div className="relative rounded-xl overflow-hidden bg-black border border-stone-700">
+                      <video ref={videoRef} autoPlay playsInline muted className="w-full h-52 object-cover" />
+                      {devices.length > 1 && (
+                        <div className="absolute top-2 left-2">
+                          <select
+                            value={selectedDevice}
+                            onChange={(e) => { setSelectedDevice(e.target.value); startCamera(); }}
+                            className="text-xs bg-black/70 text-white border border-white/20 rounded-lg px-2 py-1 outline-none"
+                          >
+                            {devices.map((d) => (
+                              <option key={d.deviceId} value={d.deviceId}>
+                                {d.label || `Kamera ${d.deviceId.slice(0, 5)}`}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={takePicture}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all">
+                        <Camera size={16} /> Ambil Foto
+                      </button>
+                      <button type="button" onClick={stopCamera}
+                        className="px-4 py-2.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-xl font-bold text-sm transition-all">
+                        <StopCircle size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pilih metode */}
+                {!isCameraOpen && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button type="button" onClick={startCamera}
+                      className="flex flex-col items-center justify-center gap-2 py-6 rounded-xl border-2 border-dashed border-stone-200 dark:border-stone-700 hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all">
+                      <Camera size={24} className="text-stone-400" />
+                      <span className="text-xs font-bold text-stone-500">Buka Kamera</span>
+                      <span className="text-[10px] text-stone-400">Foto langsung</span>
+                    </button>
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                      className="flex flex-col items-center justify-center gap-2 py-6 rounded-xl border-2 border-dashed border-stone-200 dark:border-stone-700 hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all">
+                      <Upload size={24} className="text-stone-400" />
+                      <span className="text-xs font-bold text-stone-500">Upload File</span>
+                      <span className="text-[10px] text-stone-400">JPG, PNG, WEBP</span>
+                    </button>
+                  </div>
+                )}
+              </>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+            <canvas ref={canvasRef} className="hidden" />
           </div>
 
         </form>
 
         {/* Footer */}
         <div className="p-5 border-t border-stone-100 dark:border-stone-800 flex gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 px-4 py-3 border border-stone-200 dark:border-stone-700 rounded-xl font-bold text-stone-500 hover:bg-stone-50 dark:hover:bg-stone-800 transition-all text-sm"
-          >
+          <button type="button" onClick={() => { stopCamera(); onClose(); }}
+            className="flex-1 px-4 py-3 border border-stone-200 dark:border-stone-700 rounded-xl font-bold text-stone-500 hover:bg-stone-50 dark:hover:bg-stone-800 transition-all text-sm">
             Batal
           </button>
-          <button
-            type="submit"
-            form=""
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? (
-              <><Loader2 size={14} className="animate-spin" /> Mengirim...</>
-            ) : (
-              <><Send size={14} /> Kirim Laporan</>
-            )}
+          <button type="submit" onClick={handleSubmit} disabled={isSubmitting || !image}
+            className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+            {isSubmitting
+              ? <><Loader2 size={14} className="animate-spin" /> Mengirim...</>
+              : <><Send size={14} /> Kirim Laporan</>
+            }
           </button>
         </div>
 
