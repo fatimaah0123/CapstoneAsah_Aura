@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import useDarkMode from './hooks/useDarkMode';
 
-// Guard
+// Auth
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Layout
@@ -13,17 +13,14 @@ import Footer  from './components/layout/Footer';
 // Pages
 import LoginPage          from './pages/LoginPage';
 import DashboardPage      from './pages/DashboardPage';
-import MachineManagement  from './pages/MachineManagement';
-import EngineerManagement from './pages/EngineerManagement';
 import TicketsPage        from './pages/TicketsPage';
 import TicketDetailPage   from './pages/TicketDetailPage';
-import MaintenanceHistory from './pages/MaintenanceHistory';
-import ReportPage         from './pages/ReportPage';
 import ChatbotPage        from './pages/ChatbotPage';
+import MachineManagement  from './pages/MachineManagement';
+import EngineerManagement from './pages/EngineerManagement';
+import MaintenanceHistory from './pages/MaintenanceHistory';
 
-// ─── Layout untuk semua halaman terproteksi ───────────────────────────────────
-// Navbar & Sidebar menerima isDark, toggleDark, dan onMenuClick dari sini
-// agar state dark-mode tidak tersebar ke mana-mana.
+// ─── Layout wrapper untuk semua halaman terproteksi ───────────────────────────
 const AppLayout = ({ isDark, toggleDark, isSidebarOpen, setIsSidebarOpen }) => (
   <div className={`min-h-screen flex flex-col bg-stone-50 dark:bg-stone-950 transition-colors duration-300 ${isDark ? 'dark' : ''}`}>
     <Navbar
@@ -43,7 +40,7 @@ const AppLayout = ({ isDark, toggleDark, isSidebarOpen, setIsSidebarOpen }) => (
 );
 
 // ─── App ──────────────────────────────────────────────────────────────────────
-function App() {
+const App = () => {
   const [isDark, toggleDark]              = useDarkMode();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -52,35 +49,34 @@ function App() {
   return (
     <Routes>
 
-      {/* ── Publik ─────────────────────────────────────────────────────── */}
+      {/* ── Publik ──────────────────────────────────────────────────── */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* ── Admin + Engineer ───────────────────────────────────────────── */}
+      {/* ── Admin + Engineer ─────────────────────────────────────────── */}
       <Route element={<ProtectedRoute allowedRoles={['Admin', 'Engineer']} />}>
         <Route element={<AppLayout {...layoutProps} />}>
-          <Route path="/dashboard"   element={<DashboardPage />} />
-          <Route path="/tickets"     element={<TicketsPage />} />
-          <Route path="/tickets/:id" element={<TicketDetailPage />} />
-          <Route path="/report/:id"  element={<ReportPage />} />
-          <Route path="/chatbot"     element={<ChatbotPage />} />
+          <Route path="/dashboard"     element={<DashboardPage />} />
+          <Route path="/tickets"       element={<TicketsPage />} />
+          <Route path="/tickets/:id"   element={<TicketDetailPage />} />
+          <Route path="/chatbot"       element={<ChatbotPage />} />
         </Route>
       </Route>
 
-      {/* ── Admin saja ─────────────────────────────────────────────────── */}
+      {/* ── Admin saja ───────────────────────────────────────────────── */}
       <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
         <Route element={<AppLayout {...layoutProps} />}>
-          <Route path="/machines"  element={<MachineManagement />} />
-          <Route path="/engineers" element={<EngineerManagement />} />
-          <Route path="/history"   element={<MaintenanceHistory />} />
+          <Route path="/admin/machines"    element={<MachineManagement />} />
+          <Route path="/admin/engineers"   element={<EngineerManagement />} />
+          <Route path="/admin/maintenance" element={<MaintenanceHistory />} />
         </Route>
       </Route>
 
-      {/* ── Fallback ───────────────────────────────────────────────────── */}
+      {/* ── Fallback ─────────────────────────────────────────────────── */}
       <Route path="/"  element={<Navigate to="/dashboard" replace />} />
       <Route path="*"  element={<Navigate to="/dashboard" replace />} />
 
     </Routes>
   );
-}
+};
 
 export default App;

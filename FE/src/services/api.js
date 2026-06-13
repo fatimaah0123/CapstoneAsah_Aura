@@ -1,65 +1,96 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 // ─── Axios instance utama ────────────────────────────────────────────────────
-// withCredentials: true wajib ada agar cookie HttpOnly (refreshToken dari BE)
-// ikut terkirim secara otomatis di setiap request, termasuk saat refresh token.
 const api = axios.create({
   baseURL: BASE_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  withCredentials: true, // agar cookie refreshToken otomatis ikut dikirim
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// ─── Request Interceptor ─────────────────────────────────────────────────────
-// Sisipkan accessToken dari localStorage ke header Authorization setiap request.
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// ─── Request interceptor: sisipkan accessToken di setiap request ─────────────
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-// ─── Response Interceptor ────────────────────────────────────────────────────
-// Jika BE mengembalikan 401, otomatis coba refresh token via PUT /api/auth.
-// Jika refresh juga gagal → paksa logout ke /login.
+// ─── Response interceptor: auto-refresh token saat 401 ───────────────────────
+let isRefreshing = false;
+let failedQueue = []; // antri request yang gagal saat sedang refresh
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Jika 401 dan bukan dari endpoint refresh/login itu sendiri
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes('/api/auth')
+    ) {
+      if (isRefreshing) {
+        // Kalau sedang refresh, antri dulu
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
       try {
-        // Pakai axios langsung (bukan instance `api`) agar tidak masuk loop interceptor
-        const res = await axios.put(
-          `${BASE_URL}/api/auth`,
-          {},
-          { withCredentials: true }
-        );
-        const newAccessToken = res.data.data.accessToken;
+        // Minta accessToken baru pakai refreshToken (ada di cookie HttpOnly)
+        const res = await axios.put(`${BASE_URL}/api/auth`, {}, { withCredentials: true });
+        const newToken = res.data.data.accessToken;
 
-        // Perbarui token di storage dan di header default instance
-        localStorage.setItem('accessToken', newAccessToken);
-        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        localStorage.setItem('accessToken', newToken);
+        api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
+        processQueue(null, newToken);
 
-        return api(originalRequest); // Ulangi request asal yang sempat gagal
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
       } catch (refreshError) {
-        // refreshToken juga sudah kadaluarsa → bersihkan semua dan paksa login ulang
-        localStorage.clear();
+        processQueue(refreshError, null);
+        // Refresh gagal → paksa logout, hapus data lokal
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
         window.location.href = '/login';
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
   }
 );
 
 export default api;
+
+// ─── Chatbot helper ───────────────────────────────────────────────────────────
+// Endpoint chatbot — sesuaikan path dengan BE jika berbeda
+export const chatBot = async (message) => {
+  const res = await api.post('/api/chatbot', { message });
+  return res.data.data; // { answer: "..." }
+};
