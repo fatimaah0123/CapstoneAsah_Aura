@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Clock, ArrowRight, CheckCircle, Loader, UserCheck } from 'lucide-react';
+import { AlertTriangle, Clock, ArrowRight, Wrench } from 'lucide-react';
 
 // ─── Badge status tiket ───────────────────────────────────────────────────────
 const STATUS_STYLE = {
@@ -25,14 +25,24 @@ const formatDate = (iso) => {
   });
 };
 
+// ─── Konfigurasi header ikon per tipe tabel ──────────────────────────────────
+const TYPE_ICON = {
+  critical:    <AlertTriangle size={16} className="text-red-500" />,
+  latest:      <Clock size={16} className="text-blue-500" />,
+  problematic: <Wrench size={16} className="text-orange-500" />,
+};
+
+const COLSPAN = { critical: 3, latest: 6, problematic: 3 };
+
 // ─── AssetTable ───────────────────────────────────────────────────────────────
 // Props:
 //   title → string judul tabel
 //   data  → array dari API
-//   type  → 'critical' | 'latest'
+//   type  → 'critical' | 'latest' | 'problematic'
 //
-// type='critical' → data = critical_machines: [{ id, name, rul_days }]
-// type='latest'   → data = latest_tickets:    [{ id, status, machine_name, type, engineer_name, created_at }]
+// type='critical'    → data = critical_machines:    [{ id, name, rul_days }]
+// type='latest'      → data = latest_tickets:       [{ id, status, machine_name, type, engineer_name, created_at }]
+// type='problematic' → data = problematic_machines: [{ id, name, total_failure }]
 
 const AssetTable = ({ title, data = [], type = 'critical' }) => {
   const navigate = useNavigate();
@@ -44,10 +54,7 @@ const AssetTable = ({ title, data = [], type = 'critical' }) => {
 
       {/* Header */}
       <div className="px-5 py-4 border-b border-stone-100 dark:border-stone-800 flex items-center gap-2">
-        {type === 'critical'
-          ? <AlertTriangle size={16} className="text-red-500" />
-          : <Clock size={16} className="text-blue-500" />
-        }
+        {TYPE_ICON[type] || TYPE_ICON.critical}
         <h3 className="text-sm font-bold text-stone-800 dark:text-stone-200">{title}</h3>
       </div>
 
@@ -58,13 +65,21 @@ const AssetTable = ({ title, data = [], type = 'critical' }) => {
           {/* Header kolom */}
           <thead className="bg-stone-50 dark:bg-stone-800/50 text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">
             <tr>
-              {type === 'critical' ? (
+              {type === 'critical' && (
                 <>
                   <th className="px-5 py-3 text-left">Nama Mesin</th>
                   <th className="px-5 py-3 text-left">RUL (Hari)</th>
                   <th className="px-5 py-3 text-center">Detail</th>
                 </>
-              ) : (
+              )}
+              {type === 'problematic' && (
+                <>
+                  <th className="px-5 py-3 text-left">Nama Mesin</th>
+                  <th className="px-5 py-3 text-left">Total Kerusakan</th>
+                  <th className="px-5 py-3 text-center">Detail</th>
+                </>
+              )}
+              {type === 'latest' && (
                 <>
                   <th className="px-5 py-3 text-left">Mesin</th>
                   <th className="px-5 py-3 text-left">Jenis</th>
@@ -81,7 +96,7 @@ const AssetTable = ({ title, data = [], type = 'critical' }) => {
             {isEmpty ? (
               <tr>
                 <td
-                  colSpan={type === 'critical' ? 3 : 6}
+                  colSpan={COLSPAN[type] || 3}
                   className="px-5 py-8 text-center text-sm text-stone-400"
                 >
                   Tidak ada data.
@@ -95,7 +110,7 @@ const AssetTable = ({ title, data = [], type = 'critical' }) => {
                   <tr
                     key={machine.id}
                     className="hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer group"
-                    onClick={() => navigate(`/tickets?machine=${machine.id}`)}
+                    onClick={() => navigate('/tickets')}
                   >
                     <td className="px-5 py-3.5 text-sm font-medium text-stone-800 dark:text-stone-200 group-hover:text-blue-600 transition-colors">
                       {machine.name}
@@ -109,6 +124,33 @@ const AssetTable = ({ title, data = [], type = 'critical' }) => {
                           Kritis!
                         </span>
                       )}
+                    </td>
+                    <td className="px-5 py-3.5 text-center">
+                      <button className="p-1.5 rounded-lg text-stone-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-stone-700 transition-all">
+                        <ArrowRight size={15} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : type === 'problematic' ? (
+              // ── Baris untuk problematic_machines ──
+              data.map((machine) => {
+                const failureCount = Number(machine.total_failure);
+                const isHigh = failureCount >= 5;
+                return (
+                  <tr
+                    key={machine.id}
+                    className="hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer group"
+                    onClick={() => navigate('/tickets')}
+                  >
+                    <td className="px-5 py-3.5 text-sm font-medium text-stone-800 dark:text-stone-200 group-hover:text-blue-600 transition-colors">
+                      {machine.name}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className={`text-sm font-bold ${isHigh ? 'text-red-600' : 'text-orange-600'}`}>
+                        {failureCount}x kerusakan
+                      </span>
                     </td>
                     <td className="px-5 py-3.5 text-center">
                       <button className="p-1.5 rounded-lg text-stone-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-stone-700 transition-all">

@@ -17,6 +17,7 @@ const STATUS_COLOR = {
   WaitingAssignment: '#f59e0b',
   WaitingApproval:   '#f97316',
 };
+const FAILURE_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16'];
 
 // ─── Helper: format label bulan dari ISO date string ─────────────────────────
 const formatMonth = (isoString) => {
@@ -39,12 +40,14 @@ const ChartCard = ({ title, children }) => (
 //   engineerStatus     → array [{ status, total }]
 //   ticketStatus       → array [{ status, total }]
 //   monthlyMaintenance → array [{ month, total }]  (month = ISO date)
+//   failureTypes       → array [{ type, total }]   (jenis kerusakan)
 
 const TrendCard = ({
   machineStatus      = [],
   engineerStatus     = [],
   ticketStatus       = [],
   monthlyMaintenance = [],
+  failureTypes       = [],
 }) => {
 
   // Normalkan angka (BE mengembalikan total sebagai string)
@@ -58,6 +61,10 @@ const TrendCard = ({
     ...item,
     bulan: formatMonth(item.month),
   }));
+  // Urutkan failure types dari yang paling sering, ambil maksimal 6 agar chart tidak terlalu panjang
+  const failureData  = normalize(failureTypes)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 6);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -150,6 +157,40 @@ const TrendCard = ({
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
+
+      {/* 5. Jenis Kerusakan — Horizontal Bar Chart (full width) */}
+      <div className="md:col-span-2">
+        <ChartCard title="Jenis Kerusakan Paling Sering Terjadi">
+          {failureData.length === 0 ? (
+            <div className="h-32 flex items-center justify-center text-sm text-stone-400">
+              Belum ada data jenis kerusakan.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={Math.max(180, failureData.length * 42)}>
+              <BarChart
+                data={failureData}
+                layout="vertical"
+                margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <YAxis
+                  type="category"
+                  dataKey="type"
+                  tick={{ fontSize: 11 }}
+                  width={160}
+                />
+                <Tooltip formatter={(val) => [val, 'Kejadian']} />
+                <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={22}>
+                  {failureData.map((entry, i) => (
+                    <Cell key={i} fill={FAILURE_COLORS[i % FAILURE_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+      </div>
 
     </div>
   );
